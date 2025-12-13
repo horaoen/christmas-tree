@@ -7,7 +7,27 @@ export class ChristmasTree {
         this.baseRadius = baseRadius;
         this.treeObject = new THREE.Object3D();
         this.particles = null; // Will hold the THREE.Points object
+        
+        // Interaction targets
+        this.targetRotationY = 0;
+        this.currentScale = 1;
+        this.targetScale = 1;
+        
         this.generateParticles();
+    }
+
+    // ... generateParticles ...
+
+    updateTargetRotation(delta) {
+        this.targetRotationY += delta;
+    }
+
+    updateTargetScale(factor) {
+        if (factor) {
+            this.targetScale *= factor;
+            // Clamp scale
+            this.targetScale = Math.max(0.5, Math.min(3.0, this.targetScale));
+        }
     }
 
     generateParticles() {
@@ -48,7 +68,20 @@ export class ChristmasTree {
 
     // This method will handle animation, e.g., rotation or particle effects
     animate(deltaTime) {
-        // Basic rotation
-        this.treeObject.rotation.y += 0.1 * deltaTime;
+        // Basic auto-rotation
+        this.targetRotationY += 0.1 * deltaTime;
+
+        // Smoothly interpolate rotation
+        // We accumulate rotation in targetRotationY, so we just set it.
+        // Wait, lerping rotation is tricky if it wraps. But for simple Y rotation it's fine.
+        // Actually, for direct control, maybe we should lerp the object's rotation towards target?
+        // Let's simpler approach: direct mapping with damping.
+        
+        // Apply smooth transition
+        this.treeObject.rotation.y = THREE.MathUtils.lerp(this.treeObject.rotation.y, this.targetRotationY, 0.1);
+        
+        // Smoothly interpolate scale
+        this.currentScale = THREE.MathUtils.lerp(this.currentScale, this.targetScale, 0.1);
+        this.treeObject.scale.set(this.currentScale, this.currentScale, this.currentScale);
     }
 }

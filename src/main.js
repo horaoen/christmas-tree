@@ -1,7 +1,9 @@
 import './style.css';
 import { setupScene } from './webgl/scene.js';
 import { createHandLandmarker, setupCamera, detectHands } from './gesture/hand-tracking.js';
+import { GestureController } from './gesture/gesture-controller.js';
 
+// Setup DOM
 const app = document.querySelector('#app');
 app.innerHTML = `
   <h1>3D 粒子圣诞树</h1>
@@ -10,8 +12,13 @@ const threeCanvas = document.createElement('canvas');
 threeCanvas.id = 'three-canvas';
 app.appendChild(threeCanvas);
 
+// Setup Scene
 const { scene, camera, renderer, christmasTree } = setupScene(threeCanvas);
 
+// Setup Gesture Controller
+const gestureController = new GestureController();
+
+// Setup Hand Tracking Elements
 const videoElement = document.getElementById('webcam');
 const landmarksCanvas = document.getElementById('landmarks-canvas');
 const landmarksCtx = landmarksCanvas.getContext('2d');
@@ -19,11 +26,20 @@ const landmarksCtx = landmarksCanvas.getContext('2d');
 let lastVideoTime = -1;
 
 async function initHandTracking() {
-    await createHandLandmarker(videoElement, landmarksCanvas);
+    await createHandLandmarker(videoElement, landmarksCanvas, (results) => {
+        const { rotation, scale } = gestureController.process(results);
+        if (rotation !== 0) {
+            christmasTree.updateTargetRotation(rotation);
+        }
+        if (scale !== null) {
+            christmasTree.updateTargetScale(scale);
+        }
+    });
+    
     await setupCamera();
     videoElement.play();
 
-    // Set canvas dimensions immediately after camera setup (which waits for metadata)
+    // Set canvas dimensions immediately after camera setup
     landmarksCanvas.width = videoElement.videoWidth;
     landmarksCanvas.height = videoElement.videoHeight;
 
@@ -40,6 +56,7 @@ async function detectHandsContinuously() {
 
 initHandTracking();
 
+// Error Handling
 window.onerror = function (message, source, lineno, colno, error) {
     const errorDiv = document.createElement('div');
     errorDiv.style.position = 'absolute';

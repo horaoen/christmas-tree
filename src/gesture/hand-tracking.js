@@ -3,11 +3,13 @@
 let hands = undefined;
 let video = undefined;
 let canvasCtx = undefined;
+let externalCallback = null;
 
-export async function createHandLandmarker(videoElement, canvasElement) {
+export async function createHandLandmarker(videoElement, canvasElement, onResultsCallback) {
     console.log("Initializing MediaPipe Hands...");
     video = videoElement;
     canvasCtx = canvasElement.getContext('2d');
+    externalCallback = onResultsCallback;
 
     hands = new window.Hands({locateFile: (file) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`;
@@ -71,7 +73,7 @@ export async function detectHands() {
 function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, video.videoWidth, video.videoHeight);
-    canvasCtx.drawImage(results.image, 0, 0, video.videoWidth, video.videoHeight);
+    // canvasCtx.drawImage(results.image, 0, 0, video.videoWidth, video.videoHeight);
     
     if (results.multiHandLandmarks) {
         for (const landmarks of results.multiHandLandmarks) {
@@ -82,4 +84,8 @@ function onResults(results) {
         }
     }
     canvasCtx.restore();
+
+    if (externalCallback) {
+        externalCallback(results);
+    }
 }
