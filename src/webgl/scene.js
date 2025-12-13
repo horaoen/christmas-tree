@@ -32,5 +32,5 @@ export function setupScene(canvas) {
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    return { scene, camera, renderer };
+    return { scene, camera, renderer, christmasTree };
 }

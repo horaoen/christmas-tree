@@ -1,2 +1,53 @@
-body { margin: 0; overflow: hidden; }
-#three-canvas { display: block; }
+body { margin: 0; overflow: hidden; font-family: sans-serif; }
+
+#app {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; /* Allow interaction with elements behind it */
+    z-index: 1; /* Ensure it's above the Three.js canvas */
+}
+
+#app h1 {
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 10;
+    pointer-events: auto;
+}
+
+#three-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    z-index: 0; /* Background */
+}
+
+#webcam {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px; /* Minimal size, effectively hidden */
+    height: 1px;
+    opacity: 0; /* Fully hidden */
+    pointer-events: none;
+    z-index: -1;
+}
+
+#landmarks-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2; /* Above Three.js and app content */
+    pointer-events: none; /* Allow interaction with elements behind it */
+}
