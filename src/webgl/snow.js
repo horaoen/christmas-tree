@@ -16,6 +16,7 @@ export class SnowSystem {
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const sizes = [];
+        const velocities = []; // Store individual speeds
 
         for (let i = 0; i < this.snowCount; i++) {
             // Random positions within a cube
@@ -25,14 +26,17 @@ export class SnowSystem {
                 (Math.random() - 0.5) * 20  // Z
             );
             sizes.push(Math.random() * 0.1 + 0.05); // Random size
+            velocities.push(Math.random() * 0.5 + 0.5); // Random velocity scale 0.5-1.0
         }
 
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+        geometry.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 1));
 
         const textureLoader = new THREE.TextureLoader();
         const snowTexture = textureLoader.load('/images/snow.png');
 
+        // Basic material for now, will be replaced with texture later
         const material = new THREE.PointsMaterial({
             color: 0xffffff,
             size: 0.5,
@@ -53,18 +57,21 @@ export class SnowSystem {
         if (!this.isActive || !this.snowParticles) return;
 
         const positions = this.snowParticles.geometry.attributes.position.array;
-        const speed = 1.5; // Faster snow
+        const velocities = this.snowParticles.geometry.attributes.velocity.array;
+        const baseSpeed = 2.0; 
         const time = performance.now() * 0.001;
 
         for (let i = 0; i < positions.length; i += 3) {
-            positions[i + 1] -= speed * deltaTime; // Move down
+            const vIndex = i / 3;
+            // Use individual velocity
+            positions[i + 1] -= baseSpeed * velocities[vIndex] * deltaTime; // Move down
             
             // Add slight horizontal sway
             positions[i] += Math.sin(time + positions[i] * 0.5) * 0.01;
 
             // If a snowflake falls below the scene, reset it to the top
             if (positions[i + 1] < -10) { 
-                positions[i + 1] = 10; // Reset to top
+                positions[i + 1] = 10 + Math.random() * 5; // Reset to random top Y to prevent lining up
                 positions[i] = (Math.random() - 0.5) * 20; // Random X
                 positions[i + 2] = (Math.random() - 0.5) * 20; // Random Z
             }
