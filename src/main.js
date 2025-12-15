@@ -1,7 +1,7 @@
 import './style.css';
 import { setupScene } from './webgl/scene.js';
 import { createHandLandmarker, setupCamera, detectHands } from './gesture/hand-tracking.js';
-import { GestureController } from './gesture/gesture-controller.js';
+import { GestureController } from './gesture/gesture-controller.jsx';
 
 // Setup DOM
 const app = document.querySelector('#app');
@@ -13,10 +13,18 @@ threeCanvas.id = 'three-canvas';
 app.appendChild(threeCanvas);
 
 // Setup Scene
-const { scene, camera, renderer, christmasTree } = setupScene(threeCanvas);
+const { scene, camera, renderer, christmasTree, snowSystem } = setupScene(threeCanvas);
 
 // Setup Gesture Controller
 const gestureController = new GestureController();
+
+gestureController.addEventListener('gesture', (event) => {
+    if (event.detail.pose === 'fist') {
+        christmasTree.nextTheme();
+    } else if (event.detail.pose === 'victory') {
+        snowSystem.toggle();
+    }
+});
 
 // Setup Hand Tracking Elements
 const videoElement = document.getElementById('webcam');

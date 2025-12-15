@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ChristmasTree } from './tree.js';
+import { SnowSystem } from './snow.js'; // Import SnowSystem
 
 export function setupScene(canvas) {
     const scene = new THREE.Scene();
@@ -13,6 +14,8 @@ export function setupScene(canvas) {
     const christmasTree = new ChristmasTree();
     scene.add(christmasTree.getTreeObject());
 
+    const snowSystem = new SnowSystem(scene); // Create SnowSystem instance
+
     const clock = new THREE.Clock();
 
     function animate() {
@@ -20,6 +23,7 @@ export function setupScene(canvas) {
 
         const delta = clock.getDelta();
         christmasTree.animate(delta);
+        snowSystem.animate(delta); // Animate snow system
 
         renderer.render(scene, camera);
     }
@@ -32,5 +36,5 @@ export function setupScene(canvas) {
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    return { scene, camera, renderer, christmasTree };
+    return { scene, camera, renderer, christmasTree, snowSystem }; // Return snowSystem
 }
