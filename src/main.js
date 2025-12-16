@@ -23,6 +23,8 @@ gestureController.addEventListener('gesture', (event) => {
         christmasTree.nextTheme();
     } else if (event.detail.pose === 'victory') {
         snowSystem.toggle();
+    } else if (event.detail.pose === 'restore') {
+        christmasTree.reset();
     }
 });
 

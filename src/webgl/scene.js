@@ -1,13 +1,17 @@
 import * as THREE from 'three';
 import { ChristmasTree } from './tree.js';
 import { SnowSystem } from './snow.js'; // Import SnowSystem
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 export function setupScene(canvas) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false }); // Antialias often off for post-processing
 
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // optimize for high DPI
 
     camera.position.z = 5;
 
@@ -15,6 +19,21 @@ export function setupScene(canvas) {
     scene.add(christmasTree.getTreeObject());
 
     const snowSystem = new SnowSystem(scene); // Create SnowSystem instance
+
+    // --- Post-Processing Setup ---
+    const renderScene = new RenderPass(scene, camera);
+
+    const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        1.5,  // strength
+        0.4,  // radius
+        0.2   // threshold - increased to prevent snow from glowing
+    );
+
+    const composer = new EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
+    // -----------------------------
 
     const clock = new THREE.Clock();
 
@@ -25,15 +44,21 @@ export function setupScene(canvas) {
         christmasTree.animate(delta);
         snowSystem.animate(delta); // Animate snow system
 
-        renderer.render(scene, camera);
+        // renderer.render(scene, camera);
+        composer.render();
     }
 
     animate();
 
     window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        renderer.setSize(width, height);
+        composer.setSize(width, height);
     });
 
     return { scene, camera, renderer, christmasTree, snowSystem }; // Return snowSystem

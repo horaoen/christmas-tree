@@ -49,7 +49,10 @@ export class GestureController {
             const detectedPose = this.detectPose(handLandmarks);
 
             if (detectedPose) {
-                if (now - this.lastGestureTime[detectedPose] > this.gestureCooldown) {
+                // Special handling for restore: shorter cooldown to allow reliable triggering
+                const cooldown = detectedPose === 'restore' ? 200 : this.gestureCooldown;
+                
+                if (now - (this.lastGestureTime[detectedPose] || 0) > cooldown) {
                     this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
                     this.lastGestureTime[detectedPose] = now;
                 }
@@ -81,18 +84,33 @@ export class GestureController {
 
             const dx = thumbTip.x - indexTip.x;
             const dy = thumbTip.y - indexTip.y;
-            // Pinch distance
-            const distance = Math.sqrt(dx*dx + dy*dy);
+            // Raw Pinch distance
+            const rawDistance = Math.sqrt(dx*dx + dy*dy);
 
-            if (this.baseDistance !== null) {
-                // Stabilize: ignore very small changes to prevent jitter
-                if (Math.abs(distance - this.baseDistance) > 0.01) {
-                    scaleFactor = distance / this.baseDistance;
+            // Apply Exponential Moving Average (EMA) for smoothness
+            // Alpha 0.5 offers a balance between responsiveness and jitter reduction
+            if (this.baseDistance === null) {
+                this.baseDistance = rawDistance;
+            } else {
+                this.baseDistance = this.baseDistance * 0.5 + rawDistance * 0.5;
+            }
+
+            // Calculate scale factor based on frame-to-frame change of smoothed distance
+            // We use a separate 'lastFrameDistance' to track the previous smoothed value
+            if (this.lastFrameDistance !== undefined && this.lastFrameDistance > 0) {
+                const ratio = this.baseDistance / this.lastFrameDistance;
+                // Only apply if ratio is valid and not 1 (with tiny threshold for float stability)
+                if (Math.abs(ratio - 1.0) > 0.001) {
+                    // Apply sensitivity damping: 0.4 means user has to move fingers 2.5x more for same effect
+                    // This reduces jitter and makes the zoom feel heavier/smoother
+                    scaleFactor = 1.0 + (ratio - 1.0) * 0.4;
                 }
             }
-            this.baseDistance = distance;
+            
+            this.lastFrameDistance = this.baseDistance;
         } else {
             this.baseDistance = null;
+            this.lastFrameDistance = undefined;
         }
         
         return { rotation: rotationDelta, scale: scaleFactor };
@@ -122,11 +140,24 @@ export class GestureController {
             return "fist";
         }
 
-        // Check for Victory (V-sign)
         const indexExtended = !indexCurled;
         const middleExtended = !middleCurled;
 
+        // Check for Restore (Index and Middle close together)
         if (indexExtended && middleExtended && ringCurled && pinkyCurled) {
+            const indexTip = landmarks[8];
+            const middleTip = landmarks[12];
+            const distance = Math.sqrt(
+                Math.pow(indexTip.x - middleTip.x, 2) +
+                Math.pow(indexTip.y - middleTip.y, 2)
+            );
+            
+            // If fingers are touching (or very close) - Relaxed threshold
+            if (distance < 0.08) {
+                return "restore";
+            }
+
+            // Check for Victory (V-sign) - ONLY if not Restore
             const thumbTip = landmarks[4];
             const thumbMcp = landmarks[2];
             const thumbExtendedThreshold = 0.1; 
