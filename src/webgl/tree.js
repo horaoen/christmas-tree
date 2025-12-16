@@ -59,9 +59,14 @@ const fragmentShader = `
 
 const starFragmentShader = `
     varying vec3 vColor;
+    uniform float uTime;
 
-    // Signed Distance Function for a 5-pointed star
-    float sdStar5(in vec2 p, in float r, in float rf) {
+    // Signed distance to a 5-pointed star
+    // p: coordinate (centered at 0)
+    // r: radius of the star
+    // rf: geometric factor (controls pointiness, ~0.5 is standard)
+    float sdStar5(in vec2 p, in float r, in float rf)
+    {
         const vec2 k1 = vec2(0.809016994375, -0.587785252292);
         const vec2 k2 = vec2(-k1.x,k1.y);
         p.x = abs(p.x);
@@ -76,18 +81,34 @@ const starFragmentShader = `
 
     void main() {
         vec2 uv = gl_PointCoord * 2.0 - 1.0;
-        uv.y = -uv.y; // Flip Y to point up
+        
+        // Gentle rotation
+        float angle = uTime * 0.5;
+        float c = cos(angle);
+        float s = sin(angle);
+        uv = mat2(c, -s, s, c) * uv;
 
-        // Draw star shape: r=0.8 (size), rf=0.45 (fatness)
-        float d = sdStar5(uv, 0.8, 0.45);
-        
-        // Smooth edges
-        float alpha = 1.0 - smoothstep(-0.02, 0.02, d);
-        
+        // Generate sharp 5-pointed star shape
+        float dist = sdStar5(uv, 0.7, 0.45);
+
+        // Sharp edges
+        float shape = 1.0 - smoothstep(0.0, 0.02, dist);
+
+        // Make it semi-transparent (glassy look)
+        // Slightly increased opacity from 0.6 to 0.75 per user request
+        float alpha = shape * 0.35; 
+
         if (alpha < 0.01) discard;
+
+        // Color logic
+        vec3 finalColor = vColor;
         
-        // Add a center glow
-        gl_FragColor = vec4(vColor, alpha);
+        // Add a subtle rim highlight for a 3D glass effect
+        // Highlighting the edges slightly more than the center
+        float rim = (1.0 - smoothstep(0.0, 0.1, abs(dist))) * shape;
+        finalColor += vec3(0.5) * rim;
+
+        gl_FragColor = vec4(finalColor, alpha);
     }
 `;
 
@@ -236,9 +257,9 @@ export class ChristmasTree {
         this.treeObject.add(this.ornamentPoints);
 
         // --- Create Star Mesh (Top of Tree) ---
-        const starPos = [0, this.treeHeight / 2, 0];
-        const starColors = [1.0, 0.9, 0.4]; // Bright Gold
-        const starSizes = [0.5]; // Very large compared to others
+        const starPos = [0, this.treeHeight / 2 + 0.35, 0]; // Keep high position
+        const starColors = [1.0, 0.1, 0.3]; // Ruby Red, distinct from tree
+        const starSizes = [0.8]; // Increased size to show shape clearly
         const starPhases = [0.0];
 
         const starGeo = new THREE.BufferGeometry();
