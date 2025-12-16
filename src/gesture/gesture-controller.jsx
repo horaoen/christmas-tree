@@ -3,7 +3,8 @@ export class GestureController {
         this.targetRotationY = 0;
         this.targetScale = 1;
         this.lastHandX = null;
-        this.baseDistance = null;
+        this.pinchReferenceDistance = null;
+        this.smoothedPinchDistance = null;
 
         this.gestureCooldown = 500; // milliseconds
         this.lastGestureTime = {
@@ -33,7 +34,7 @@ export class GestureController {
     process(results) {
         if (!results || !results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
             this.lastHandX = null;
-            this.baseDistance = null;
+            this.pinchReferenceDistance = null;
             // Optionally reset gesture times or indicate no hands
             return { rotation: 0, scale: null };
         }
@@ -51,7 +52,7 @@ export class GestureController {
             if (detectedPose) {
                 // Special handling for restore: shorter cooldown to allow reliable triggering
                 const cooldown = detectedPose === 'restore' ? 200 : this.gestureCooldown;
-                
+
                 if (now - (this.lastGestureTime[detectedPose] || 0) > cooldown) {
                     this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
                     this.lastGestureTime[detectedPose] = now;
@@ -71,7 +72,7 @@ export class GestureController {
         if (this.lastHandX !== null) {
             const deltaX = avgX - this.lastHandX;
             // Sensitivity factor: how much hand movement translates to rotation
-            rotationDelta = deltaX * 5; 
+            rotationDelta = deltaX * 5;
         }
         this.lastHandX = avgX;
 
@@ -85,34 +86,26 @@ export class GestureController {
             const dx = thumbTip.x - indexTip.x;
             const dy = thumbTip.y - indexTip.y;
             // Raw Pinch distance
-            const rawDistance = Math.sqrt(dx*dx + dy*dy);
+            const rawDistance = Math.sqrt(dx * dx + dy * dy);
 
             // Apply Exponential Moving Average (EMA) for smoothness
             // Alpha 0.5 offers a balance between responsiveness and jitter reduction
-            if (this.baseDistance === null) {
-                this.baseDistance = rawDistance;
+            if (this.pinchReferenceDistance === null) {
+                this.pinchReferenceDistance = rawDistance;
+                this.smoothedPinchDistance = rawDistance;
+
             } else {
-                this.baseDistance = this.baseDistance * 0.5 + rawDistance * 0.5;
+                this.smoothedPinchDistance = this.smoothedPinchDistance * 0.5 + rawDistance * 0.5;
             }
 
-            // Calculate scale factor based on frame-to-frame change of smoothed distance
-            // We use a separate 'lastFrameDistance' to track the previous smoothed value
-            if (this.lastFrameDistance !== undefined && this.lastFrameDistance > 0) {
-                const ratio = this.baseDistance / this.lastFrameDistance;
-                // Only apply if ratio is valid and not 1 (with tiny threshold for float stability)
-                if (Math.abs(ratio - 1.0) > 0.001) {
-                    // Apply sensitivity damping: 0.4 means user has to move fingers 2.5x more for same effect
-                    // This reduces jitter and makes the zoom feel heavier/smoother
-                    scaleFactor = 1.0 + (ratio - 1.0) * 0.4;
-                }
-            }
-            
-            this.lastFrameDistance = this.baseDistance;
+            // Invert the ratio so bringing fingers together shrinks the tree
+            const pinchRatio = this.pinchReferenceDistance / Math.max(this.smoothedPinchDistance, 0.001);
+            scaleFactor = pinchRatio;
         } else {
-            this.baseDistance = null;
-            this.lastFrameDistance = undefined;
+            this.pinchReferenceDistance = null;
+            this.smoothedPinchDistance = null;
         }
-        
+
         return { rotation: rotationDelta, scale: scaleFactor };
     }
 
@@ -122,7 +115,7 @@ export class GestureController {
         const pip = landmarks[pipIdx];
         const mcp = landmarks[mcpIdx];
 
-        const curlThreshold = 0.03; 
+        const curlThreshold = 0.03;
         return (tip.y > pip.y + curlThreshold) && (pip.y > mcp.y + curlThreshold);
     }
 
@@ -151,7 +144,7 @@ export class GestureController {
                 Math.pow(indexTip.x - middleTip.x, 2) +
                 Math.pow(indexTip.y - middleTip.y, 2)
             );
-            
+
             // If fingers are touching (or very close) - Relaxed threshold
             if (distance < 0.08) {
                 return "restore";
@@ -160,7 +153,7 @@ export class GestureController {
             // Check for Victory (V-sign) - ONLY if not Restore
             const thumbTip = landmarks[4];
             const thumbMcp = landmarks[2];
-            const thumbExtendedThreshold = 0.1; 
+            const thumbExtendedThreshold = 0.1;
             const thumbDistance = Math.sqrt(
                 Math.pow(thumbTip.x - thumbMcp.x, 2) +
                 Math.pow(thumbTip.y - thumbMcp.y, 2) +
@@ -170,7 +163,7 @@ export class GestureController {
                 return "victory";
             }
         }
-        
+
         return null;
     }
 }

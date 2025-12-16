@@ -10,8 +10,6 @@ const vertexShader = `
     varying vec3 vColor;
 
     void main() {
-        vColor = color;
-        
         // Starry Sky Scatter Effect
         // Displace particles randomly based on phase when uScatter > 0
         vec3 noiseDir = normalize(vec3(
@@ -20,7 +18,7 @@ const vertexShader = `
             sin(phase * 3.0)
         ));
         
-        vec3 displacedPosition = position + noiseDir * uScatter * 3.0; // Scatter outwards
+        vec3 displacedPosition = position + noiseDir * uScatter * 0.6; // Scatter outwards
 
         vec4 mvPosition = modelViewMatrix * vec4( displacedPosition, 1.0 );
         
@@ -29,10 +27,12 @@ const vertexShader = `
         float twinkle = sin(uTime * 3.0 + phase) * 0.5 + 0.5;
         float pulse = sin(uTime * 1.0 + phase * 0.5) * 0.5 + 0.5;
         
+        vColor = color * (0.6 + 1.0 * twinkle); // Color brightness pulse
+
         float scale = 0.8 + twinkle * 0.3 + pulse * 0.2;
         
         // Size attenuation
-        gl_PointSize = size * (400.0 / -mvPosition.z) * scale;
+        gl_PointSize = size * (450.0 / -mvPosition.z) * scale;
 
         gl_Position = projectionMatrix * mvPosition;
     }
@@ -57,16 +57,51 @@ const fragmentShader = `
     }
 `;
 
+const starFragmentShader = `
+    varying vec3 vColor;
+
+    // Signed Distance Function for a 5-pointed star
+    float sdStar5(in vec2 p, in float r, in float rf) {
+        const vec2 k1 = vec2(0.809016994375, -0.587785252292);
+        const vec2 k2 = vec2(-k1.x,k1.y);
+        p.x = abs(p.x);
+        p -= 2.0*max(dot(k1,p),0.0)*k1;
+        p -= 2.0*max(dot(k2,p),0.0)*k2;
+        p.x = abs(p.x);
+        p.y -= r;
+        vec2 ba = rf*vec2(-k1.y,k1.x) - vec2(0,1);
+        float h = clamp( dot(p,ba)/dot(ba,ba), 0.0, r );
+        return length(p-ba*h) * sign(p.y*ba.x-p.x*ba.y);
+    }
+
+    void main() {
+        vec2 uv = gl_PointCoord * 2.0 - 1.0;
+        uv.y = -uv.y; // Flip Y to point up
+
+        // Draw star shape: r=0.8 (size), rf=0.45 (fatness)
+        float d = sdStar5(uv, 0.8, 0.45);
+        
+        // Smooth edges
+        float alpha = 1.0 - smoothstep(-0.02, 0.02, d);
+        
+        if (alpha < 0.01) discard;
+        
+        // Add a center glow
+        gl_FragColor = vec4(vColor, alpha);
+    }
+`;
+
 export class ChristmasTree {
-    constructor(particleCount = 15000, treeHeight = 3, baseRadius = 1.2) {
+    constructor(particleCount = 25000, treeHeight = 3, baseRadius = 1.2) {
         this.particleCount = particleCount; // Approximate total for foliage
         this.treeHeight = treeHeight;
         this.baseRadius = baseRadius;
         this.treeObject = new THREE.Object3D();
-        
+
         this.foliagePoints = null;
         this.ornamentPoints = null;
-        
+        this.starPoint = null;
+
         // Interaction targets
         this.targetRotationY = 0;
         this.currentScale = 1;
@@ -79,14 +114,14 @@ export class ChristmasTree {
 
         this.colorThemes = [
             // Classic: Green foliage (handled in logic), Red/Gold/Yellow ornaments
-            { name: 'Classic', ornaments: [new THREE.Color(0xff0000), new THREE.Color(0xFFD700), new THREE.Color(0xffff00)] },
+            { name: 'Colorful', ornaments: [new THREE.Color(0xff0000), new THREE.Color(0x00ff00), new THREE.Color(0x0000ff), new THREE.Color(0xffff00), new THREE.Color(0x00ffff), new THREE.Color(0xff00ff)] },
             // Icy: Blue/White ornaments
             { name: 'Icy', ornaments: [new THREE.Color(0xADD8E6), new THREE.Color(0x00BFFF), new THREE.Color(0xFFFFFF)] },
             // Warm: Gold/Orange ornaments
             { name: 'Warm', ornaments: [new THREE.Color(0xFFD700), new THREE.Color(0xFFA500), new THREE.Color(0xFF4500)] }
         ];
         this.currentThemeIndex = 0;
-        
+
         this.generateTree();
         this._applyTheme(this.colorThemes[this.currentThemeIndex]);
     }
@@ -95,8 +130,8 @@ export class ChristmasTree {
         // Tree parameters
         const layerCount = 7;
         // Layers overlap significantly to look dense
-        const layerHeight = this.treeHeight / 3.0; 
-        
+        const layerHeight = this.treeHeight / 3.0;
+
         const foliagePos = [];
         const foliageColors = [];
         const foliageSizes = [];
@@ -106,19 +141,19 @@ export class ChristmasTree {
         const ornamentColors = [];
         const ornamentSizes = [];
         const ornamentPhases = [];
-        
+
         const color = new THREE.Color();
-        
+
         // Generate Layers
         for (let l = 0; l < layerCount; l++) {
             const t = l / (layerCount - 1); // 0 at bottom, 1 at top
             const layerY = (this.treeHeight * 0.8) * t; // Spread layers up
             const currentRadius = this.baseRadius * (1.0 - t * 0.8); // Radius tapers
-            
+
             // Foliage for this layer
             // Distribute particles within the cone of this layer
             const particlesPerLayer = Math.floor(this.particleCount / layerCount);
-            
+
             // Taper size near top to prevent glare
             // t goes from 0 (bottom) to 1 (top)
             const sizeFactor = 1.0 - t * 0.4; // 1.0 at bottom, 0.6 at top
@@ -129,43 +164,43 @@ export class ChristmasTree {
                 const rRatio = Math.sqrt(Math.random()); // Even areal distribution
                 const r = rRatio * currentRadius * (1 - h / layerHeight);
                 const theta = Math.random() * Math.PI * 2;
-                
+
                 const x = r * Math.cos(theta);
                 const z = r * Math.sin(theta);
                 const y = layerY + h - this.treeHeight / 2; // Centered vertically
 
                 // Add to foliage
                 foliagePos.push(x, y, z);
-                
+
                 // Base Foliage Color (Varied Green)
                 color.setHSL(0.3 + Math.random() * 0.05, 0.6 + Math.random() * 0.2, 0.3 + Math.random() * 0.2);
                 foliageColors.push(color.r, color.g, color.b);
-                
-                foliageSizes.push((0.04 + Math.random() * 0.04) * sizeFactor);
+
+                foliageSizes.push((0.025 + Math.random() * 0.03) * sizeFactor);
                 foliagePhases.push(Math.random() * Math.PI * 2);
 
                 // Chance to add an ornament at the edge (surface)
                 // Ornaments are denser at the tips of the branches (max radius for height)
-                if (Math.random() < 0.03 && r > currentRadius * (1 - h / layerHeight) * 0.8) {
-                     // Push ornament at the same position (or slightly out)
-                     ornamentPos.push(x * 1.05, y, z * 1.05);
-                     
-                     // Placeholder color, will be set by theme
-                     ornamentColors.push(1, 1, 1);
-                     
-                     ornamentSizes.push((0.12 + Math.random() * 0.05) * sizeFactor); // Larger
-                     ornamentPhases.push(Math.random() * Math.PI * 2);
+                if (Math.random() < 0.12 && r > currentRadius * (1 - h / layerHeight) * 0.8) {
+                    // Push ornament at the same position (or slightly out)
+                    ornamentPos.push(x * 1.05, y, z * 1.05);
+
+                    // Placeholder color, will be set by theme
+                    ornamentColors.push(1, 1, 1);
+
+                    ornamentSizes.push((0.09 + Math.random() * 0.04) * sizeFactor); // Larger
+                    ornamentPhases.push(Math.random() * Math.PI * 2);
                 }
             }
         }
-        
+
         // --- Create Foliage Mesh ---
         const foliageGeo = new THREE.BufferGeometry();
         foliageGeo.setAttribute('position', new THREE.Float32BufferAttribute(foliagePos, 3));
         foliageGeo.setAttribute('color', new THREE.Float32BufferAttribute(foliageColors, 3));
         foliageGeo.setAttribute('size', new THREE.Float32BufferAttribute(foliageSizes, 1));
         foliageGeo.setAttribute('phase', new THREE.Float32BufferAttribute(foliagePhases, 1));
-        
+
         const foliageMaterial = new THREE.ShaderMaterial({
             uniforms: this.uniforms,
             vertexShader: vertexShader,
@@ -175,7 +210,7 @@ export class ChristmasTree {
             blending: THREE.AdditiveBlending,
             depthWrite: false
         });
-        
+
         this.foliagePoints = new THREE.Points(foliageGeo, foliageMaterial);
         this.treeObject.add(this.foliagePoints);
 
@@ -199,6 +234,31 @@ export class ChristmasTree {
 
         this.ornamentPoints = new THREE.Points(ornamentGeo, ornamentMaterial);
         this.treeObject.add(this.ornamentPoints);
+
+        // --- Create Star Mesh (Top of Tree) ---
+        const starPos = [0, this.treeHeight / 2, 0];
+        const starColors = [1.0, 0.9, 0.4]; // Bright Gold
+        const starSizes = [0.5]; // Very large compared to others
+        const starPhases = [0.0];
+
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
+        starGeo.setAttribute('size', new THREE.Float32BufferAttribute(starSizes, 1));
+        starGeo.setAttribute('phase', new THREE.Float32BufferAttribute(starPhases, 1));
+
+        const starMaterial = new THREE.ShaderMaterial({
+            uniforms: this.uniforms,
+            vertexShader: vertexShader,
+            fragmentShader: starFragmentShader,
+            vertexColors: true,
+            transparent: true,
+            blending: THREE.NormalBlending,
+            depthWrite: false
+        });
+
+        this.starPoint = new THREE.Points(starGeo, starMaterial);
+        this.treeObject.add(this.starPoint);
     }
 
     updateTargetRotation(delta) {
@@ -207,7 +267,8 @@ export class ChristmasTree {
 
     updateTargetScale(factor) {
         if (factor) {
-            this.targetScale *= factor;
+            // factor is the pinchRatio. When 1, scale is 1.5. When it shrinks, scale grows.
+            this.targetScale = 1.5 / factor;
             // Clamp scale: Min 1.5 (Larger default), Max 8.0 (Deep Zoom)
             this.targetScale = Math.max(1.5, Math.min(8.0, this.targetScale));
         }
@@ -227,7 +288,7 @@ export class ChristmasTree {
         this.uniforms.uScatter.value = scatter;
 
         this.treeObject.rotation.y = THREE.MathUtils.lerp(this.treeObject.rotation.y, this.targetRotationY, 0.1);
-        
+
         // Heavy damping for smooth zoom (0.03)
         this.currentScale = THREE.MathUtils.lerp(this.currentScale, this.targetScale, 0.03);
         this.treeObject.scale.set(this.currentScale, this.currentScale, this.currentScale);
@@ -248,7 +309,7 @@ export class ChristmasTree {
 
     _applyTheme(themeObj) {
         if (!this.ornamentPoints) return;
-        
+
         const colors = this.ornamentPoints.geometry.attributes.color.array;
         const themePalette = themeObj.ornaments;
         const color = new THREE.Color();

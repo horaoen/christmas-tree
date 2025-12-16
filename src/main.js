@@ -5,9 +5,6 @@ import { GestureController } from './gesture/gesture-controller.jsx';
 
 // Setup DOM
 const app = document.querySelector('#app');
-app.innerHTML = `
-  <h1>3D 粒子圣诞树</h1>
-`;
 const threeCanvas = document.createElement('canvas');
 threeCanvas.id = 'three-canvas';
 app.appendChild(threeCanvas);
@@ -45,7 +42,7 @@ async function initHandTracking() {
             christmasTree.updateTargetScale(scale);
         }
     });
-    
+
     await setupCamera();
     videoElement.play();
 
