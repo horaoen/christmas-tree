@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ChristmasTree } from './tree.js';
-import { SnowSystem } from './snow.js'; // Import SnowSystem
+import { SnowSystem } from './snow.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -18,7 +18,7 @@ export function setupScene(canvas) {
     const christmasTree = new ChristmasTree();
     scene.add(christmasTree.getTreeObject());
 
-    const snowSystem = new SnowSystem(scene); // Create SnowSystem instance
+    const snowSystem = new SnowSystem(scene);
 
     // --- Post-Processing Setup ---
     const renderScene = new RenderPass(scene, camera);
@@ -42,9 +42,8 @@ export function setupScene(canvas) {
 
         const delta = clock.getDelta();
         christmasTree.animate(delta);
-        snowSystem.animate(delta); // Animate snow system
+        snowSystem.animate(delta);
 
-        // renderer.render(scene, camera);
         composer.render();
     }
 
@@ -61,5 +60,5 @@ export function setupScene(canvas) {
         composer.setSize(width, height);
     });
 
-    return { scene, camera, renderer, christmasTree, snowSystem }; // Return snowSystem
+    return { scene, camera, renderer, christmasTree, snowSystem };
 }

@@ -8,8 +8,6 @@ export class SnowSystem {
         this.isActive = true; // Enable by default for visibility
         this.baseSpeed = 1.0; // Slower falling speed
 
-        this.particleTexture = null; 
-        
         this.initSnow();
     }
 

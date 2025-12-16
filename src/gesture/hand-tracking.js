@@ -51,11 +51,10 @@ export async function setupCamera() {
     }
 }
 
-let detectionError = false;
 let isProcessing = false;
 
 export async function detectHands() {
-    if (detectionError || isProcessing) return;
+    if (isProcessing) return;
     if (hands && video && video.readyState >= 2) {
         isProcessing = true;
         try {
@@ -63,7 +62,6 @@ export async function detectHands() {
         } catch (e) {
             console.error("Detection error details:", e.message, e.stack);
             // Don't stop forever on glitch, but log it.
-            // detectionError = true; 
         } finally {
             isProcessing = false;
         }
@@ -73,7 +71,6 @@ export async function detectHands() {
 function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, video.videoWidth, video.videoHeight);
-    // canvasCtx.drawImage(results.image, 0, 0, video.videoWidth, video.videoHeight);
     
     if (results.multiHandLandmarks) {
         for (const landmarks of results.multiHandLandmarks) {

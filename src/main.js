@@ -46,7 +46,6 @@ async function initHandTracking() {
     await setupCamera();
     videoElement.play();
 
-    // Set canvas dimensions immediately after camera setup
     landmarksCanvas.width = videoElement.videoWidth;
     landmarksCanvas.height = videoElement.videoHeight;
 
