@@ -186,11 +186,16 @@ export class ChristmasTree {
     }
 
     generateTree() {
-        // ... (rest of generateTree stays the same, I already modified the beginning in the previous step)
+        // Clear previous if any
+        if (this.foliagePoints) this.treeObject.remove(this.foliagePoints);
+        if (this.ornamentPoints) this.treeObject.remove(this.ornamentPoints);
+        if (this.starPoint) this.treeObject.remove(this.starPoint);
+        if (this.trunkPoints) this.treeObject.remove(this.trunkPoints);
+
         // Tree parameters
-        const layerCount = 7;
+        const layerCount = 10; // Increased layers for smoother profile
         // Layers overlap significantly to look dense
-        const layerHeight = this.treeHeight / 3.0;
+        const layerHeight = this.treeHeight / layerCount;
 
         const foliagePos = [];
         const foliageColors = [];
@@ -201,59 +206,131 @@ export class ChristmasTree {
         const ornamentColors = [];
         const ornamentSizes = [];
         const ornamentPhases = [];
+        
+        const trunkPos = [];
+        const trunkColors = [];
+        const trunkSizes = [];
+        const trunkPhases = [];
 
         const color = new THREE.Color();
 
-        // Generate Layers
+        // --- 1. Generate Trunk (Central Column - Subtle & Ghostly) ---
+        const trunkParticles = Math.floor(this.particleCount * 0.08); // Reduced count
+        const trunkHeight = this.treeHeight * 0.6; 
+        const trunkRadius = 0.2;
+
+        for (let i = 0; i < trunkParticles; i++) {
+            const h = Math.random() * this.treeHeight * 0.9;
+            // More scatter for a "dusty" core look, not a solid pipe
+            const r = Math.pow(Math.random(), 0.5) * trunkRadius * (1.0 - h / this.treeHeight);
+            const theta = Math.random() * Math.PI * 2;
+
+            const x = r * Math.cos(theta);
+            const z = r * Math.sin(theta);
+            const y = h - this.treeHeight / 2;
+
+            trunkPos.push(x, y, z);
+            
+            // Subtle, dark core colors (Deep amber/brown) to anchor the light
+            // Kept very dark to allow additive blending to just hint at structure
+            const barkColor = new THREE.Color(0x503010).multiplyScalar(0.4); 
+            
+            trunkColors.push(barkColor.r, barkColor.g, barkColor.b);
+            
+            // Varied sizes, mostly small
+            trunkSizes.push(0.02 + Math.random() * 0.03);
+            trunkPhases.push(Math.random() * Math.PI * 2);
+        }
+
+        // --- 2. Generate Foliage (Branches - Voluminous & Sparkling) ---
+        const foliageParticlesTotal = this.particleCount;
+        
         for (let l = 0; l < layerCount; l++) {
-            const t = l / (layerCount - 1); // 0 at bottom, 1 at top
-            const layerY = (this.treeHeight * 0.8) * t; // Spread layers up
-            const currentRadius = this.baseRadius * (1.0 - t * 0.8); // Radius tapers
+            const t = l / (layerCount - 1); 
+            const layerY = (this.treeHeight * 0.85) * t; 
+            const maxBranchRadius = this.baseRadius * (1.0 - t * 0.85); 
 
-            // Foliage for this layer
-            // Distribute particles within the cone of this layer
-            const particlesPerLayer = Math.floor(this.particleCount / layerCount);
+            const branchCount = Math.floor(9 - t * 6); 
+            const layerOffset = l * 1.5; 
 
-            // Taper size near top to prevent glare
-            // t goes from 0 (bottom) to 1 (top)
-            const sizeFactor = 1.0 - t * 0.4; // 1.0 at bottom, 0.6 at top
+            const particlesPerLayer = Math.floor(foliageParticlesTotal / layerCount);
 
             for (let i = 0; i < particlesPerLayer; i++) {
-                // Random point in cone
-                const h = Math.random() * layerHeight;
-                const rRatio = Math.sqrt(Math.random()); // Even areal distribution
-                const r = rRatio * currentRadius * (1 - h / layerHeight);
-                const theta = Math.random() * Math.PI * 2;
+                const branchIndex = Math.floor(Math.random() * branchCount);
+                const branchAngleBase = (branchIndex / branchCount) * Math.PI * 2 + layerOffset;
 
-                const x = r * Math.cos(theta);
-                const z = r * Math.sin(theta);
-                const y = layerY + h - this.treeHeight / 2; // Centered vertically
+                const rNorm = Math.pow(Math.random(), 0.7); // Less biased to tips, fill volume more
+                const r = rNorm * maxBranchRadius;
 
-                // Add to foliage
+                // Increased spread for fluffier branches
+                // Add "Air" to the tree
+                const spread = 0.6 + rNorm * 0.6; 
+                const angle = branchAngleBase + (Math.random() - 0.5) * spread;
+
+                const droop = Math.pow(rNorm, 2.0) * 0.5; 
+
+                // Thicker branches vertically
+                const branchThickness = 0.2 + rNorm * 0.2;
+                const h = (Math.random() - 0.5) * branchThickness;
+
+                // Add significant random jitter to break lines
+                const jitter = 0.12; 
+                const jx = (Math.random() - 0.5) * jitter;
+                const jy = (Math.random() - 0.5) * jitter;
+                const jz = (Math.random() - 0.5) * jitter;
+
+                const x = r * Math.cos(angle) + jx;
+                const z = r * Math.sin(angle) + jz;
+                const y = layerY + h - droop - this.treeHeight / 2 + jy;
+
                 foliagePos.push(x, y, z);
-
-                // Initial Base Foliage Color (Placeholder, will be overwritten by _applyTheme)
-                foliageColors.push(1, 1, 1);
-
-                foliageSizes.push((0.025 + Math.random() * 0.03) * sizeFactor);
+                foliageColors.push(1, 1, 1); 
+                
+                // Varied particle sizes for "Texture"
+                // Some tiny "dust", some larger leaves
+                const sizeFactor = 1.0 - t * 0.3;
+                let pSize = 0.0;
+                if (Math.random() < 0.3) {
+                    pSize = (0.01 + Math.random() * 0.02) * sizeFactor; // Tiny dust
+                } else {
+                    pSize = (0.04 + Math.random() * 0.04) * sizeFactor; // Main leaf
+                }
+                foliageSizes.push(pSize);
                 foliagePhases.push(Math.random() * Math.PI * 2);
 
-                // Chance to add an ornament at the edge (surface)
-                // Ornaments are denser at the tips of the branches (max radius for height)
-                if (Math.random() < 0.12 && r > currentRadius * (1 - h / layerHeight) * 0.8) {
-                    // Push ornament at the same position (or slightly out)
-                    ornamentPos.push(x * 1.05, y, z * 1.05);
-
-                    // Placeholder color, will be set by theme
+                // --- Ornaments ---
+                if (Math.random() < 0.08 && rNorm > 0.5) {
+                    ornamentPos.push(x, y - 0.05, z);
                     ornamentColors.push(1, 1, 1);
-
-                    ornamentSizes.push((0.09 + Math.random() * 0.04) * sizeFactor); // Larger
+                    ornamentSizes.push((0.10 + Math.random() * 0.05) * sizeFactor);
                     ornamentPhases.push(Math.random() * Math.PI * 2);
                 }
             }
         }
 
-        // --- Create Foliage Mesh ---
+        // --- Create Meshes ---
+
+        // 1. Trunk - Now with Additive Blending for "Ghostly" look
+        const trunkGeo = new THREE.BufferGeometry();
+        trunkGeo.setAttribute('position', new THREE.Float32BufferAttribute(trunkPos, 3));
+        trunkGeo.setAttribute('color', new THREE.Float32BufferAttribute(trunkColors, 3));
+        trunkGeo.setAttribute('size', new THREE.Float32BufferAttribute(trunkSizes, 1));
+        trunkGeo.setAttribute('phase', new THREE.Float32BufferAttribute(trunkPhases, 1));
+        
+        const trunkMaterial = new THREE.ShaderMaterial({
+            uniforms: this.uniforms,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            vertexColors: true,
+            transparent: true,      // Changed back to true
+            blending: THREE.AdditiveBlending, // Changed to Additive
+            depthWrite: false       // Changed to false
+        });
+        
+        this.trunkPoints = new THREE.Points(trunkGeo, trunkMaterial);
+        this.treeObject.add(this.trunkPoints);
+
+        // 2. Foliage
         const foliageGeo = new THREE.BufferGeometry();
         foliageGeo.setAttribute('position', new THREE.Float32BufferAttribute(foliagePos, 3));
         foliageGeo.setAttribute('color', new THREE.Float32BufferAttribute(foliageColors, 3));
@@ -273,14 +350,13 @@ export class ChristmasTree {
         this.foliagePoints = new THREE.Points(foliageGeo, foliageMaterial);
         this.treeObject.add(this.foliagePoints);
 
-        // --- Create Ornament Mesh ---
+        // 3. Ornaments
         const ornamentGeo = new THREE.BufferGeometry();
         ornamentGeo.setAttribute('position', new THREE.Float32BufferAttribute(ornamentPos, 3));
         ornamentGeo.setAttribute('color', new THREE.Float32BufferAttribute(ornamentColors, 3));
         ornamentGeo.setAttribute('size', new THREE.Float32BufferAttribute(ornamentSizes, 1));
         ornamentGeo.setAttribute('phase', new THREE.Float32BufferAttribute(ornamentPhases, 1));
 
-        // Use same shader for now, will upgrade later
         const ornamentMaterial = new THREE.ShaderMaterial({
             uniforms: this.uniforms,
             vertexShader: vertexShader,
@@ -294,10 +370,10 @@ export class ChristmasTree {
         this.ornamentPoints = new THREE.Points(ornamentGeo, ornamentMaterial);
         this.treeObject.add(this.ornamentPoints);
 
-        // --- Create Star Mesh (Top of Tree) ---
-        const starPos = [0, this.treeHeight / 2 + 0.35, 0]; // Keep high position
-        const starColors = [1.0, 0.1, 0.3]; // Ruby Red, distinct from tree
-        const starSizes = [0.8]; // Increased size to show shape clearly
+        // 4. Star
+        const starPos = [0, this.treeHeight / 2 + 0.15, 0]; // Adjusted height
+        const starColors = [1.0, 0.1, 0.3];
+        const starSizes = [0.9]; 
         const starPhases = [0.0];
 
         const starGeo = new THREE.BufferGeometry();
