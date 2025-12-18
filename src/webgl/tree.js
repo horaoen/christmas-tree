@@ -27,7 +27,8 @@ const vertexShader = `
         float twinkle = sin(uTime * 3.0 + phase) * 0.5 + 0.5;
         float pulse = sin(uTime * 1.0 + phase * 0.5) * 0.5 + 0.5;
         
-        vColor = color * (0.6 + 1.0 * twinkle); // Color brightness pulse
+        // Balanced brightness for soft glow
+        vColor = color * (0.7 + 0.4 * twinkle);
 
         float scale = 0.8 + twinkle * 0.3 + pulse * 0.2;
         
@@ -51,8 +52,11 @@ const fragmentShader = `
         
         // Radial gradient: 1.0 at center, 0.0 at edge
         float strength = 1.0 - (dist * 2.0);
-        strength = pow(strength, 2.0); // Make the core brighter and falloff sharper
+        strength = pow(strength, 2.0); 
         
+        // Balanced alpha: visible but not blinding
+        strength *= 0.35; 
+
         gl_FragColor = vec4( vColor, strength );
     }
 `;
@@ -134,12 +138,46 @@ export class ChristmasTree {
         };
 
         this.colorThemes = [
-            // Classic: Green foliage (handled in logic), Red/Gold/Yellow ornaments
-            { name: 'Colorful', ornaments: [new THREE.Color(0xff0000), new THREE.Color(0x00ff00), new THREE.Color(0x0000ff), new THREE.Color(0xffff00), new THREE.Color(0x00ffff), new THREE.Color(0xff00ff)] },
-            // Icy: Blue/White ornaments
-            { name: 'Icy', ornaments: [new THREE.Color(0xADD8E6), new THREE.Color(0x00BFFF), new THREE.Color(0xFFFFFF)] },
-            // Warm: Gold/Orange ornaments
-            { name: 'Warm', ornaments: [new THREE.Color(0xFFD700), new THREE.Color(0xFFA500), new THREE.Color(0xFF4500)] }
+            // Pink & White: High contrast Deep Pink and Pure White
+            { 
+                name: 'PinkWhite', 
+                foliage: [
+                    new THREE.Color(0xFF1493), // Deep Pink (Rich color)
+                    new THREE.Color(0xFFFFFF), // Pure White (Bright accent)
+                    new THREE.Color(0xFF69B4), // Hot Pink (Vibrant)
+                    new THREE.Color(0xFFFFFF), // Pure White (Balanced ratio)
+                    new THREE.Color(0xFFB6C1)  // Light Pink (Soft transition)
+                ],
+                ornaments: [
+                    new THREE.Color(0xFFFFFF), // White
+                    new THREE.Color(0xFF1493), // Deep Pink
+                    new THREE.Color(0xFFFFFF), // White (More ornaments)
+                    new THREE.Color(0xFF69B4), // Hot Pink
+                    new THREE.Color(0xFFD700)  // Gold accent
+                ],
+                star: new THREE.Color(0xFF1493) // Deep Pink Star
+            },
+            // Classic: Green foliage, Red/Gold/Yellow ornaments
+            { 
+                name: 'Colorful', 
+                foliage: [new THREE.Color(0x2d5a27), new THREE.Color(0x3d7a36), new THREE.Color(0x1d3a19)],
+                ornaments: [new THREE.Color(0xff0000), new THREE.Color(0x00ff00), new THREE.Color(0x0000ff), new THREE.Color(0xffff00), new THREE.Color(0x00ffff), new THREE.Color(0xff00ff)],
+                star: new THREE.Color(0xff0000)
+            },
+            // Icy: White/Blue foliage and Blue/White ornaments
+            { 
+                name: 'Icy', 
+                foliage: [new THREE.Color(0xffffff), new THREE.Color(0xe0ffff), new THREE.Color(0xadd8e6)],
+                ornaments: [new THREE.Color(0xADD8E6), new THREE.Color(0x00BFFF), new THREE.Color(0xFFFFFF)],
+                star: new THREE.Color(0x00BFFF)
+            },
+            // Warm: Green foliage and Gold/Orange ornaments
+            { 
+                name: 'Warm', 
+                foliage: [new THREE.Color(0x2d5a27), new THREE.Color(0x3d7a36), new THREE.Color(0x1d3a19)],
+                ornaments: [new THREE.Color(0xFFD700), new THREE.Color(0xFFA500), new THREE.Color(0xFF4500)],
+                star: new THREE.Color(0xFFA500)
+            }
         ];
         this.currentThemeIndex = 0;
 
@@ -148,6 +186,7 @@ export class ChristmasTree {
     }
 
     generateTree() {
+        // ... (rest of generateTree stays the same, I already modified the beginning in the previous step)
         // Tree parameters
         const layerCount = 7;
         // Layers overlap significantly to look dense
@@ -193,9 +232,8 @@ export class ChristmasTree {
                 // Add to foliage
                 foliagePos.push(x, y, z);
 
-                // Base Foliage Color (Varied Green)
-                color.setHSL(0.3 + Math.random() * 0.05, 0.6 + Math.random() * 0.2, 0.3 + Math.random() * 0.2);
-                foliageColors.push(color.r, color.g, color.b);
+                // Initial Base Foliage Color (Placeholder, will be overwritten by _applyTheme)
+                foliageColors.push(1, 1, 1);
 
                 foliageSizes.push((0.025 + Math.random() * 0.03) * sizeFactor);
                 foliagePhases.push(Math.random() * Math.PI * 2);
@@ -329,19 +367,45 @@ export class ChristmasTree {
     }
 
     _applyTheme(themeObj) {
-        if (!this.ornamentPoints) return;
+        // Update Ornaments
+        if (this.ornamentPoints) {
+            const colors = this.ornamentPoints.geometry.attributes.color.array;
+            const themePalette = themeObj.ornaments;
+            const count = this.ornamentPoints.geometry.attributes.position.count;
 
-        const colors = this.ornamentPoints.geometry.attributes.color.array;
-        const themePalette = themeObj.ornaments;
-        const color = new THREE.Color();
-        const count = this.ornamentPoints.geometry.attributes.position.count;
-
-        for (let i = 0; i < count; i++) {
-            const targetColor = themePalette[i % themePalette.length];
-            colors[i * 3] = targetColor.r;
-            colors[i * 3 + 1] = targetColor.g;
-            colors[i * 3 + 2] = targetColor.b;
+            for (let i = 0; i < count; i++) {
+                const targetColor = themePalette[i % themePalette.length];
+                colors[i * 3] = targetColor.r;
+                colors[i * 3 + 1] = targetColor.g;
+                colors[i * 3 + 2] = targetColor.b;
+            }
+            this.ornamentPoints.geometry.attributes.color.needsUpdate = true;
         }
-        this.ornamentPoints.geometry.attributes.color.needsUpdate = true;
+
+        // Update Foliage
+        if (this.foliagePoints && themeObj.foliage) {
+            const colors = this.foliagePoints.geometry.attributes.color.array;
+            const themePalette = themeObj.foliage;
+            const count = this.foliagePoints.geometry.attributes.position.count;
+
+            for (let i = 0; i < count; i++) {
+                const targetColor = themePalette[i % themePalette.length];
+                // Add a little randomness to the foliage color within the theme
+                const variance = Math.random() * 0.1 - 0.05;
+                colors[i * 3] = Math.max(0, Math.min(1, targetColor.r + variance));
+                colors[i * 3 + 1] = Math.max(0, Math.min(1, targetColor.g + variance));
+                colors[i * 3 + 2] = Math.max(0, Math.min(1, targetColor.b + variance));
+            }
+            this.foliagePoints.geometry.attributes.color.needsUpdate = true;
+        }
+
+        // Update Star
+        if (this.starPoint && themeObj.star) {
+            const colors = this.starPoint.geometry.attributes.color.array;
+            colors[0] = themeObj.star.r;
+            colors[1] = themeObj.star.g;
+            colors[2] = themeObj.star.b;
+            this.starPoint.geometry.attributes.color.needsUpdate = true;
+        }
     }
 }
