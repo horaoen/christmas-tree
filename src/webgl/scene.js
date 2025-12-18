@@ -18,7 +18,7 @@ export function setupScene(canvas) {
     const christmasTree = new ChristmasTree();
     scene.add(christmasTree.getTreeObject());
 
-    const snowSystem = new SnowSystem(scene);
+    const snowSystem = new SnowSystem(scene, camera);
 
     // --- Post-Processing Setup ---
     const renderScene = new RenderPass(scene, camera);
