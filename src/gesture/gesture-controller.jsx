@@ -11,6 +11,11 @@ export class GestureController {
             fist: 0,
             victory: 0
         };
+        this.lastPoseTimestamp = 0; 
+        
+        // Stabilizer: Track how long a pose has been held
+        this.poseHistory = { pose: null, startTime: 0 };
+        
         this.listeners = {};
     }
 
@@ -50,11 +55,32 @@ export class GestureController {
             // Detect pose for each hand
             const detectedPose = this.detectPose(handLandmarks);
 
+            // Stability Check (Debounce)
+            // A pose must be held for 200ms to be valid. 
+            // This prevents accidental triggers during hand transitions (e.g. opening hand).
             if (detectedPose) {
-                activePose = detectedPose;
-                if (now - (this.lastGestureTime[detectedPose] || 0) > this.gestureCooldown) {
-                    this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
-                    this.lastGestureTime[detectedPose] = now;
+                if (this.poseHistory.pose === detectedPose) {
+                    // It's the same pose as last frame
+                    const duration = now - this.poseHistory.startTime;
+                    if (duration > 200) { // Threshold: 200ms
+                        // Valid Stable Pose
+                        activePose = detectedPose;
+                        
+                        // Trigger Event (if cooldown allows)
+                        if (now - (this.lastGestureTime[detectedPose] || 0) > this.gestureCooldown) {
+                            this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
+                            this.lastGestureTime[detectedPose] = now;
+                            this.lastPoseTimestamp = now;
+                        }
+                    }
+                } else {
+                    // New/Different pose detected, start timer
+                    this.poseHistory = { pose: detectedPose, startTime: now };
+                }
+            } else {
+                // No pose detected
+                if (this.poseHistory.pose !== null) {
+                    this.poseHistory = { pose: null, startTime: 0 };
                 }
             }
         }
@@ -75,50 +101,58 @@ export class GestureController {
         }
         this.lastHandX = avgX;
 
-        // 2. Scale Logic (Absolute Normalized Pinch)
-        // Only active if NO specific pose is detected to avoid conflicts
-        if (landmarks.length > 0 && !activePose) {
+        // 2. Scale Logic: "Total Hand Openness" (5-Finger Sum)
+        // Solves conflict: Poses "1" and "2" have low total openness -> Base Scale.
+        // Only a fully Open Hand has high total openness -> Zoom.
+        if (landmarks.length > 0) {
             const hand = landmarks[0];
             const wrist = hand[0];
             const middleMcp = hand[9];
-            const thumbTip = hand[4];
-            const indexTip = hand[8];
 
-            // 1. Calculate Hand Scale (Reference size independent of Z-distance)
+            // 1. Hand Size Reference
             const handSize = Math.sqrt(
                 Math.pow(middleMcp.x - wrist.x, 2) +
                 Math.pow(middleMcp.y - wrist.y, 2)
             );
+            const safeHandSize = Math.max(handSize, 0.001);
 
-            // 2. Calculate "Openness" (Distance from Wrist to Index Tip)
-            // This is robust for "Fist" (curled) vs "Open Hand" (extended)
-            const openness = Math.sqrt(
-                Math.pow(indexTip.x - wrist.x, 2) +
-                Math.pow(indexTip.y - wrist.y, 2)
-            );
+            // 2. Calculate Sum of Distances (Wrist to All 5 Tips)
+            let totalDist = 0;
+            const tipIndices = [4, 8, 12, 16, 20]; // Thumb, Index, Middle, Ring, Pinky
+            for (const idx of tipIndices) {
+                const tip = hand[idx];
+                totalDist += Math.sqrt(
+                    Math.pow(tip.x - wrist.x, 2) +
+                    Math.pow(tip.y - wrist.y, 2)
+                );
+            }
 
-            // 3. Normalize Openness
-            // Fist: Ratio is roughly 0.5 - 0.7
-            // Open: Ratio is roughly 1.5 - 1.9
-            // We shift it so 0.6 becomes 0.0 (Closed) for easier mapping later
-            const rawNormalizedPinch = (openness / Math.max(handSize, 0.001)) - 0.6;
+            // 3. Normalize Ratio
+            // Ranges (approx): Fist ~3.0, "1" ~4.2, "2" ~5.4, Open ~9.0
+            const ratio = totalDist / safeHandSize;
 
-            // 4. Smooth it (EMA)
+            // 4. Mapping with Deadzone
+            // We want "1" and "2" to NOT trigger zoom, so we set threshold above ~5.5
+            // Threshold 5.8 ensures only 3+ fingers extended triggers zoom.
+            const zoomThreshold = 5.8; 
+            
+            // Normalize inputs above threshold
+            // Input 5.8 -> 0.0
+            // Input 9.0 -> ~3.2
+            const activeOpenness = Math.max(0, ratio - zoomThreshold);
+
+            // 5. Smoothing (Simple EMA for balance)
             if (this.smoothedPinchDistance === null) {
-                this.smoothedPinchDistance = rawNormalizedPinch;
+                this.smoothedPinchDistance = activeOpenness;
             } else {
-                // Lower alpha = more smoothing (0.2 is very silky, 0.5 is responsive)
-                this.smoothedPinchDistance = this.smoothedPinchDistance * 0.8 + rawNormalizedPinch * 0.2;
+                // Alpha 0.3: Responsive but smooth
+                this.smoothedPinchDistance = this.smoothedPinchDistance * 0.7 + activeOpenness * 0.3;
             }
 
             scaleFactor = this.smoothedPinchDistance;
         } else {
-            // When pose is active or hand lost, hold the last value or reset?
-            // Resetting to null allows the tree code to decide (or hold).
-            // But for absolute mapping, we just stop sending updates.
+            this.smoothedPinchDistance = null;
             scaleFactor = null;
-            // We don't need to reset smoothedPinchDistance explicitly unless we want to restart smoothing on re-entry
-            // keeping it creates a smoother re-entry if hand comes back quickly
         }
 
         return { rotation: rotationDelta, scale: scaleFactor };

@@ -394,20 +394,15 @@ export class ChristmasTree {
 
     updateTargetScale(factor) {
         if (factor !== null && factor !== undefined) {
-            // Deadzone Logic for "Openness":
-            // Input factor = (Distance / HandSize) - 0.6
-            // Fist range: ~ -0.1 to 0.2
-            // Open range: ~ 1.0 to 1.3
+            // 5-Finger Openness Logic:
+            // factor is (TotalRatio - 5.8).
+            // It is 0.0 for Fist/Pose1/Pose2 (Restored state).
+            // It is > 0.0 only when hand opens wide.
             
-            // Set deadzone at 0.3 (roughly when fingers start uncurling past 90 degrees)
-            const minInput = 0.3;
-            
-            // Subtract minInput, clamping at 0
-            const adjustedFactor = Math.max(0, factor - minInput);
-
-            // Map the remaining range to scale
-            // adjustedFactor 0.0 -> Scale 1.3
-            let newScale = 1.3 + (adjustedFactor * 3.5);
+            // Base Scale 1.3
+            // Factor typically goes up to ~3.0 for wide open hand.
+            // 1.3 + 3.0 * 1.5 = 5.8 (Max Zoom)
+            let newScale = 1.3 + (factor * 1.5);
 
             // Clamp: Min 1.3, Max 6.0
             this.targetScale = Math.max(1.3, Math.min(6.0, newScale));
@@ -437,7 +432,8 @@ export class ChristmasTree {
     reset() {
         this.targetScale = 1.3;
         this.targetRotationY = 0;
-        this.currentScale = 1.3; 
+        // Do NOT set currentScale directly, allowing smooth transition
+        // this.currentScale = 1.3; 
     }
 
     nextTheme() {

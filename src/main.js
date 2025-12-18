@@ -18,8 +18,10 @@ const gestureController = new GestureController();
 gestureController.addEventListener('gesture', (event) => {
     if (event.detail.pose === 'one_finger') {
         christmasTree.setTheme('PinkWhite');
+        christmasTree.reset();
     } else if (event.detail.pose === 'two_fingers') {
         christmasTree.setTheme('Classic');
+        christmasTree.reset();
     }
 });
 
@@ -27,8 +29,10 @@ gestureController.addEventListener('gesture', (event) => {
 window.addEventListener('keydown', (event) => {
     if (event.key === '1') {
         christmasTree.setTheme('PinkWhite');
+        christmasTree.reset();
     } else if (event.key === '2') {
         christmasTree.setTheme('Classic');
+        christmasTree.reset();
     } else if (event.key === 'v') {
         snowSystem.toggle();
     } else if (event.key === 'r') {
