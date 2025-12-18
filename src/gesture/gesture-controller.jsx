@@ -1,9 +1,6 @@
 export class GestureController {
     constructor() {
-        this.targetRotationY = 0;
-        this.targetScale = 1;
         this.lastHandX = null;
-        this.pinchReferenceDistance = null;
         this.smoothedPinchDistance = null;
 
         this.gestureCooldown = 500; // milliseconds
@@ -39,7 +36,6 @@ export class GestureController {
     process(results) {
         if (!results || !results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
             this.lastHandX = null;
-            this.pinchReferenceDistance = null;
             // Optionally reset gesture times or indicate no hands
             return { rotation: 0, scale: null };
         }

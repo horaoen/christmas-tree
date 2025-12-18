@@ -436,11 +436,6 @@ export class ChristmasTree {
         // this.currentScale = 1.3; 
     }
 
-    nextTheme() {
-        this.currentThemeIndex = (this.currentThemeIndex + 1) % this.colorThemes.length;
-        this._applyTheme(this.colorThemes[this.currentThemeIndex]);
-    }
-
     setTheme(themeName) {
         const index = this.colorThemes.findIndex(t => t.name === themeName);
         if (index !== -1) {

@@ -10,7 +10,7 @@ threeCanvas.id = 'three-canvas';
 app.appendChild(threeCanvas);
 
 // Setup Scene
-const { scene, camera, renderer, christmasTree, snowSystem } = setupScene(threeCanvas);
+const { christmasTree, snowSystem } = setupScene(threeCanvas);
 
 // Setup Gesture Controller
 const gestureController = new GestureController();

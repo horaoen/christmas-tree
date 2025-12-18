@@ -14,13 +14,6 @@ body { margin: 0; overflow: hidden; font-family: sans-serif; }
     z-index: 1; /* Ensure it's above the Three.js canvas */
 }
 
-#app h1 {
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    z-index: 10;
-    pointer-events: auto;
-}
-
 #three-canvas {
     position: absolute;
     top: 0;
