@@ -129,8 +129,8 @@ export class ChristmasTree {
 
         // Interaction targets
         this.targetRotationY = 0;
-        this.currentScale = 1;
-        this.targetScale = 1;
+        this.currentScale = 1.3;
+        this.targetScale = 1.3;
 
         this.uniforms = {
             uTime: { value: 0 },
@@ -138,45 +138,37 @@ export class ChristmasTree {
         };
 
         this.colorThemes = [
-            // Pink & White: High contrast Deep Pink and Pure White
+            // Pink & White: The user's preferred style
             { 
                 name: 'PinkWhite', 
                 foliage: [
-                    new THREE.Color(0xFF1493), // Deep Pink (Rich color)
-                    new THREE.Color(0xFFFFFF), // Pure White (Bright accent)
-                    new THREE.Color(0xFF69B4), // Hot Pink (Vibrant)
-                    new THREE.Color(0xFFFFFF), // Pure White (Balanced ratio)
-                    new THREE.Color(0xFFB6C1)  // Light Pink (Soft transition)
+                    new THREE.Color(0xFFC0CB), // Pink
+                    new THREE.Color(0xFFFFFF), // White
+                    new THREE.Color(0xFF69B4), // Hot Pink
+                    new THREE.Color(0xFFB6C1)  // Light Pink
                 ],
                 ornaments: [
                     new THREE.Color(0xFFFFFF), // White
                     new THREE.Color(0xFF1493), // Deep Pink
-                    new THREE.Color(0xFFFFFF), // White (More ornaments)
-                    new THREE.Color(0xFF69B4), // Hot Pink
-                    new THREE.Color(0xFFD700)  // Gold accent
+                    new THREE.Color(0xFFD700)  // Gold
                 ],
-                star: new THREE.Color(0xFF1493) // Deep Pink Star
+                star: new THREE.Color(0xFF1493)
             },
-            // Classic: Green foliage, Red/Gold/Yellow ornaments
+            // Classic: Traditional Red, Green, Gold
             { 
-                name: 'Colorful', 
-                foliage: [new THREE.Color(0x2d5a27), new THREE.Color(0x3d7a36), new THREE.Color(0x1d3a19)],
-                ornaments: [new THREE.Color(0xff0000), new THREE.Color(0x00ff00), new THREE.Color(0x0000ff), new THREE.Color(0xffff00), new THREE.Color(0x00ffff), new THREE.Color(0xff00ff)],
-                star: new THREE.Color(0xff0000)
-            },
-            // Icy: White/Blue foliage and Blue/White ornaments
-            { 
-                name: 'Icy', 
-                foliage: [new THREE.Color(0xffffff), new THREE.Color(0xe0ffff), new THREE.Color(0xadd8e6)],
-                ornaments: [new THREE.Color(0xADD8E6), new THREE.Color(0x00BFFF), new THREE.Color(0xFFFFFF)],
-                star: new THREE.Color(0x00BFFF)
-            },
-            // Warm: Green foliage and Gold/Orange ornaments
-            { 
-                name: 'Warm', 
-                foliage: [new THREE.Color(0x2d5a27), new THREE.Color(0x3d7a36), new THREE.Color(0x1d3a19)],
-                ornaments: [new THREE.Color(0xFFD700), new THREE.Color(0xFFA500), new THREE.Color(0xFF4500)],
-                star: new THREE.Color(0xFFA500)
+                name: 'Classic', 
+                foliage: [
+                    new THREE.Color(0x228B22), // Forest Green (Standard, visible)
+                    new THREE.Color(0x006400), // Dark Green
+                    new THREE.Color(0x32CD32)  // Lime Green (Just a few highlights for volume)
+                ],
+                ornaments: [
+                    new THREE.Color(0xFF0000), // Bright Red
+                    new THREE.Color(0xFFD700), // Gold
+                    new THREE.Color(0xFFFFFF), // White
+                    new THREE.Color(0xC0C0C0)  // Silver
+                ],
+                star: new THREE.Color(0xFFD700) // Gold
             }
         ];
         this.currentThemeIndex = 0;
@@ -401,11 +393,24 @@ export class ChristmasTree {
     }
 
     updateTargetScale(factor) {
-        if (factor) {
-            // factor is the pinchRatio. When 1, scale is 1.5. When it shrinks, scale grows.
-            this.targetScale = 1.5 / factor;
-            // Clamp scale: Min 1.5 (Larger default), Max 8.0 (Deep Zoom)
-            this.targetScale = Math.max(1.5, Math.min(8.0, this.targetScale));
+        if (factor !== null && factor !== undefined) {
+            // Deadzone Logic for "Openness":
+            // Input factor = (Distance / HandSize) - 0.6
+            // Fist range: ~ -0.1 to 0.2
+            // Open range: ~ 1.0 to 1.3
+            
+            // Set deadzone at 0.3 (roughly when fingers start uncurling past 90 degrees)
+            const minInput = 0.3;
+            
+            // Subtract minInput, clamping at 0
+            const adjustedFactor = Math.max(0, factor - minInput);
+
+            // Map the remaining range to scale
+            // adjustedFactor 0.0 -> Scale 1.3
+            let newScale = 1.3 + (adjustedFactor * 3.5);
+
+            // Clamp: Min 1.3, Max 6.0
+            this.targetScale = Math.max(1.3, Math.min(6.0, newScale));
         }
     }
 
@@ -418,7 +423,7 @@ export class ChristmasTree {
 
         // Calculate Scatter Factor based on Scale
         // When scale > 2.0, start scattering. Smooth transition.
-        // Scale 1.5 to 2.0 is "Solid Tree" zone.
+        // Scale 1.3 to 2.0 is "Solid Tree" zone.
         const scatter = Math.max(0.0, (this.currentScale - 2.0) * 0.8);
         this.uniforms.uScatter.value = scatter;
 
@@ -430,16 +435,22 @@ export class ChristmasTree {
     }
 
     reset() {
-        this.targetScale = 1.5;
+        this.targetScale = 1.3;
         this.targetRotationY = 0;
-        this.currentScale = 1.5; // Optional: Snap immediately or let it lerp. Let's lerp for smoothness, so just setting target is enough.
-        // Actually, if we want "force reset", maybe we should clear rotation accumulation?
-        // But targetRotationY is absolute. So setting to 0 resets orientation.
+        this.currentScale = 1.3; 
     }
 
     nextTheme() {
         this.currentThemeIndex = (this.currentThemeIndex + 1) % this.colorThemes.length;
         this._applyTheme(this.colorThemes[this.currentThemeIndex]);
+    }
+
+    setTheme(themeName) {
+        const index = this.colorThemes.findIndex(t => t.name === themeName);
+        if (index !== -1) {
+            this.currentThemeIndex = index;
+            this._applyTheme(this.colorThemes[index]);
+        }
     }
 
     _applyTheme(themeObj) {

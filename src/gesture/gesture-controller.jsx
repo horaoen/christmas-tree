@@ -42,6 +42,7 @@ export class GestureController {
         const landmarks = results.multiHandLandmarks;
         let rotationDelta = 0;
         let scaleFactor = null;
+        let activePose = null;
 
         const now = performance.now(); // Get current time for debouncing
 
@@ -50,10 +51,8 @@ export class GestureController {
             const detectedPose = this.detectPose(handLandmarks);
 
             if (detectedPose) {
-                // Special handling for restore: shorter cooldown to allow reliable triggering
-                const cooldown = detectedPose === 'restore' ? 200 : this.gestureCooldown;
-
-                if (now - (this.lastGestureTime[detectedPose] || 0) > cooldown) {
+                activePose = detectedPose;
+                if (now - (this.lastGestureTime[detectedPose] || 0) > this.gestureCooldown) {
                     this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
                     this.lastGestureTime[detectedPose] = now;
                 }
@@ -76,34 +75,50 @@ export class GestureController {
         }
         this.lastHandX = avgX;
 
-        // 2. Scale Logic (Single Hand Pinch)
-        // Using Thumb tip (4) and Index finger tip (8)
-        if (landmarks.length > 0) {
+        // 2. Scale Logic (Absolute Normalized Pinch)
+        // Only active if NO specific pose is detected to avoid conflicts
+        if (landmarks.length > 0 && !activePose) {
             const hand = landmarks[0];
+            const wrist = hand[0];
+            const middleMcp = hand[9];
             const thumbTip = hand[4];
             const indexTip = hand[8];
 
-            const dx = thumbTip.x - indexTip.x;
-            const dy = thumbTip.y - indexTip.y;
-            // Raw Pinch distance
-            const rawDistance = Math.sqrt(dx * dx + dy * dy);
+            // 1. Calculate Hand Scale (Reference size independent of Z-distance)
+            const handSize = Math.sqrt(
+                Math.pow(middleMcp.x - wrist.x, 2) +
+                Math.pow(middleMcp.y - wrist.y, 2)
+            );
 
-            // Apply Exponential Moving Average (EMA) for smoothness
-            // Alpha 0.5 offers a balance between responsiveness and jitter reduction
-            if (this.pinchReferenceDistance === null) {
-                this.pinchReferenceDistance = rawDistance;
-                this.smoothedPinchDistance = rawDistance;
+            // 2. Calculate "Openness" (Distance from Wrist to Index Tip)
+            // This is robust for "Fist" (curled) vs "Open Hand" (extended)
+            const openness = Math.sqrt(
+                Math.pow(indexTip.x - wrist.x, 2) +
+                Math.pow(indexTip.y - wrist.y, 2)
+            );
 
+            // 3. Normalize Openness
+            // Fist: Ratio is roughly 0.5 - 0.7
+            // Open: Ratio is roughly 1.5 - 1.9
+            // We shift it so 0.6 becomes 0.0 (Closed) for easier mapping later
+            const rawNormalizedPinch = (openness / Math.max(handSize, 0.001)) - 0.6;
+
+            // 4. Smooth it (EMA)
+            if (this.smoothedPinchDistance === null) {
+                this.smoothedPinchDistance = rawNormalizedPinch;
             } else {
-                this.smoothedPinchDistance = this.smoothedPinchDistance * 0.5 + rawDistance * 0.5;
+                // Lower alpha = more smoothing (0.2 is very silky, 0.5 is responsive)
+                this.smoothedPinchDistance = this.smoothedPinchDistance * 0.8 + rawNormalizedPinch * 0.2;
             }
 
-            // Invert the ratio so bringing fingers together shrinks the tree
-            const pinchRatio = this.pinchReferenceDistance / Math.max(this.smoothedPinchDistance, 0.001);
-            scaleFactor = pinchRatio;
+            scaleFactor = this.smoothedPinchDistance;
         } else {
-            this.pinchReferenceDistance = null;
-            this.smoothedPinchDistance = null;
+            // When pose is active or hand lost, hold the last value or reset?
+            // Resetting to null allows the tree code to decide (or hold).
+            // But for absolute mapping, we just stop sending updates.
+            scaleFactor = null;
+            // We don't need to reset smoothedPinchDistance explicitly unless we want to restart smoothing on re-entry
+            // keeping it creates a smoother re-entry if hand comes back quickly
         }
 
         return { rotation: rotationDelta, scale: scaleFactor };
@@ -119,49 +134,33 @@ export class GestureController {
         return (tip.y > pip.y + curlThreshold) && (pip.y > mcp.y + curlThreshold);
     }
 
-    // Detects specific poses like "fist" or "victory"
+    // Detects specific poses like "one_finger" or "two_fingers"
     detectPose(landmarks) {
         if (!landmarks || landmarks.length < 21) return null;
 
-        // Check for Fist
+        // Check finger states
         const indexCurled = this._isFingerCurled(landmarks, 8, 7, 6);
         const middleCurled = this._isFingerCurled(landmarks, 12, 11, 10);
         const ringCurled = this._isFingerCurled(landmarks, 16, 15, 14);
         const pinkyCurled = this._isFingerCurled(landmarks, 20, 19, 18);
+        const thumbCurled = this._isFingerCurled(landmarks, 4, 3, 2); // Simple thumb check
 
-        if (indexCurled && middleCurled && ringCurled && pinkyCurled) {
-            return "fist";
-        }
-
+        // Extended fingers
         const indexExtended = !indexCurled;
         const middleExtended = !middleCurled;
+        const ringExtended = !ringCurled;
+        const pinkyExtended = !pinkyCurled;
 
-        // Check for Restore (Index and Middle close together)
+        // "One Finger" (Index only) -> Switch to PinkWhite
+        // Strict check: Index UP, Middle/Ring/Pinky DOWN
+        if (indexExtended && middleCurled && ringCurled && pinkyCurled) {
+            return "one_finger";
+        }
+
+        // "Two Fingers" (Victory/Peace) -> Switch to Classic
+        // Strict check: Index & Middle UP, Ring/Pinky DOWN
         if (indexExtended && middleExtended && ringCurled && pinkyCurled) {
-            const indexTip = landmarks[8];
-            const middleTip = landmarks[12];
-            const distance = Math.sqrt(
-                Math.pow(indexTip.x - middleTip.x, 2) +
-                Math.pow(indexTip.y - middleTip.y, 2)
-            );
-
-            // If fingers are touching (or very close) - Relaxed threshold
-            if (distance < 0.08) {
-                return "restore";
-            }
-
-            // Check for Victory (V-sign) - ONLY if not Restore
-            const thumbTip = landmarks[4];
-            const thumbMcp = landmarks[2];
-            const thumbExtendedThreshold = 0.1;
-            const thumbDistance = Math.sqrt(
-                Math.pow(thumbTip.x - thumbMcp.x, 2) +
-                Math.pow(thumbTip.y - thumbMcp.y, 2) +
-                Math.pow(thumbTip.z - thumbMcp.z, 2)
-            );
-            if (thumbDistance < thumbExtendedThreshold) {
-                return "victory";
-            }
+            return "two_fingers";
         }
 
         return null;

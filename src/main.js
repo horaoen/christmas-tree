@@ -16,11 +16,22 @@ const { scene, camera, renderer, christmasTree, snowSystem } = setupScene(threeC
 const gestureController = new GestureController();
 
 gestureController.addEventListener('gesture', (event) => {
-    if (event.detail.pose === 'fist') {
-        christmasTree.nextTheme();
-    } else if (event.detail.pose === 'victory') {
+    if (event.detail.pose === 'one_finger') {
+        christmasTree.setTheme('PinkWhite');
+    } else if (event.detail.pose === 'two_fingers') {
+        christmasTree.setTheme('Classic');
+    }
+});
+
+// Keyboard Controls for Debugging/Ease of Use
+window.addEventListener('keydown', (event) => {
+    if (event.key === '1') {
+        christmasTree.setTheme('PinkWhite');
+    } else if (event.key === '2') {
+        christmasTree.setTheme('Classic');
+    } else if (event.key === 'v') {
         snowSystem.toggle();
-    } else if (event.detail.pose === 'restore') {
+    } else if (event.key === 'r') {
         christmasTree.reset();
     }
 });
