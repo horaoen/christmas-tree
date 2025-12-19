@@ -22,7 +22,13 @@ describe('OrnamentManager', () => {
         expect(typeof manager.loadOrnaments).toBe('function');
     });
 
-    it('should have an update method', () => {
-        expect(typeof manager.update).toBe('function');
+    it('should load ornaments from a config array', () => {
+        const config = [
+            { id: 'bell', path: 'images/ornaments/bell.png', position: [0, 1, 0] },
+            { id: 'gift', path: 'images/ornaments/gift.png', position: [1, 0, 0] }
+        ];
+        manager.loadOrnaments(config);
+        expect(manager.ornaments.length).toBe(2);
+        expect(manager.ornaments[0].userData.id).toBe('bell');
     });
 });

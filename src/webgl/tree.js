@@ -128,7 +128,24 @@ export class OrnamentManager {
      * @param {Array} config 挂件配置列表
      */
     loadOrnaments(config) {
-        // 逻辑将在 Phase 2 实现
+        config.forEach(item => {
+            // 创建占位几何体（在 Task 2 中会细化材质）
+            const geometry = new THREE.PlaneGeometry(0.2, 0.2);
+            const material = new THREE.MeshBasicMaterial({ transparent: true });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // 设置位置
+            if (item.position) {
+                mesh.position.set(...item.position);
+            }
+            
+            // 存储元数据
+            mesh.userData.id = item.id;
+            mesh.userData.path = item.path;
+            
+            this.ornaments.push(mesh);
+            this.treeObject.add(mesh);
+        });
     }
 
     /**
