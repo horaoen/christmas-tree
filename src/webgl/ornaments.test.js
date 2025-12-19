@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as THREE from 'three';
-import { OrnamentManager } from './tree.js'; 
+import { OrnamentManager, ChristmasTree } from './tree.js'; 
+
+describe('ChristmasTree integration', () => {
+    it('should initialize with an OrnamentManager', () => {
+        const tree = new ChristmasTree();
+        expect(tree.ornamentManager).toBeDefined();
+        expect(tree.ornamentManager instanceof OrnamentManager).toBe(true);
+    });
+});
 
 describe('OrnamentManager', () => {
     let treeObject;

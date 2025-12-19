@@ -187,6 +187,8 @@ export class ChristmasTree {
             uScatter: { value: 0 }
         };
 
+        this.ornamentManager = new OrnamentManager(this.treeObject);
+
         this.colorThemes = [
             // Pink & White: The user's preferred style
             { 
@@ -225,6 +227,13 @@ export class ChristmasTree {
 
         this.generateTree();
         this._applyTheme(this.colorThemes[this.currentThemeIndex]);
+
+        // 加载预设挂件
+        this.ornamentManager.loadOrnaments([
+            { id: 'bell', path: 'images/ornaments/bell.png', position: [0.5, 0.5, 0.5] },
+            { id: 'gift', path: 'images/ornaments/gift.png', position: [-0.5, -0.2, 0.8] },
+            { id: 'snowflake', path: 'images/ornaments/snowflake.png', position: [0.2, 1.2, -0.4] }
+        ]);
     }
 
     generateTree() {
