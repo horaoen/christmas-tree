@@ -2,7 +2,7 @@
 
 ## Phase 1: 准备与架构设计
 - [x] Task: 创建资源目录 `images/ornaments/` 并放入占位图片。 (0040f38)
-- [ ] Task: 在 `src/webgl/tree.js` 中定义 `OrnamentManager` 类雏形，负责挂件的加载与管理。
+- [x] Task: 在 `src/webgl/tree.js` 中定义 `OrnamentManager` 类雏形，负责挂件的加载与管理。 (6b0ed83)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: 准备与架构设计' (Protocol in workflow.md)
 
 ## Phase 2: 挂件生成与渲染
