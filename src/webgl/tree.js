@@ -129,11 +129,20 @@ export class OrnamentManager {
      */
     loadOrnaments(config) {
         config.forEach(item => {
-            // 创建占位几何体（在 Task 2 中会细化材质）
             const geometry = new THREE.PlaneGeometry(0.2, 0.2);
-            const material = new THREE.MeshBasicMaterial({ transparent: true });
+            // 初始化材质，颜色设为白色以正确混合纹理颜色
+            const material = new THREE.MeshBasicMaterial({ 
+                transparent: true,
+                side: THREE.DoubleSide
+            });
             const mesh = new THREE.Mesh(geometry, material);
             
+            // 加载纹理
+            this.loader.load(item.path, (texture) => {
+                material.map = texture;
+                material.needsUpdate = true;
+            });
+
             // 设置位置
             if (item.position) {
                 mesh.position.set(...item.position);

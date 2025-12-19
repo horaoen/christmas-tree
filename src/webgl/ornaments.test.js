@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as THREE from 'three';
-// 我们将要创建的类
-// import { OrnamentManager } from './tree.js'; 
-
 import { OrnamentManager } from './tree.js'; 
 
 describe('OrnamentManager', () => {
@@ -30,5 +27,17 @@ describe('OrnamentManager', () => {
         manager.loadOrnaments(config);
         expect(manager.ornaments.length).toBe(2);
         expect(manager.ornaments[0].userData.id).toBe('bell');
+    });
+
+    it('should assign textures to ornaments', () => {
+        const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
+        const texture = new THREE.Texture();
+        vi.spyOn(manager.loader, 'load').mockImplementation((path, onLoad) => {
+            if (onLoad) onLoad(texture);
+            return texture;
+        });
+
+        manager.loadOrnaments(config);
+        expect(manager.ornaments[0].material.map).toBe(texture);
     });
 });
