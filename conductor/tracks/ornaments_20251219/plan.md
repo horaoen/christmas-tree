@@ -6,7 +6,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: 准备与架构设计' (Protocol in workflow.md)
 
 ## Phase 2: 挂件生成与渲染
-- [ ] Task: 实现挂件配置加载逻辑，支持多张图片。
+- [x] Task: 实现挂件配置加载逻辑，支持多张图片。 (7863588)
 - [ ] Task: 编写挂件 3D 物体创建函数，将图片纹理应用到 Mesh 上。
 - [ ] Task: 将生成的挂件物体添加到 `ChristmasTree` 的 3D 分组中，确保其随树旋转。
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: 挂件生成与渲染' (Protocol in workflow.md)
