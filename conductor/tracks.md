@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [ ] Track: 预设装饰挂件与交互展示
+## [~] Track: 预设装饰挂件与交互展示
 *Link: [./conductor/tracks/ornaments_20251219/](./conductor/tracks/ornaments_20251219/)*
