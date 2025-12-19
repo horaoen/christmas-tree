@@ -116,6 +116,30 @@ const starFragmentShader = `
     }
 `;
 
+export class OrnamentManager {
+    constructor(treeObject) {
+        this.treeObject = treeObject;
+        this.ornaments = [];
+        this.loader = new THREE.TextureLoader();
+    }
+
+    /**
+     * 加载预设挂件
+     * @param {Array} config 挂件配置列表
+     */
+    loadOrnaments(config) {
+        // 逻辑将在 Phase 2 实现
+    }
+
+    /**
+     * 更新动画
+     * @param {number} deltaTime 
+     */
+    update(deltaTime) {
+        // 逻辑将在 Phase 3 实现
+    }
+}
+
 export class ChristmasTree {
     constructor(particleCount = 25000, treeHeight = 3, baseRadius = 1.2) {
         this.particleCount = particleCount; // Approximate total for foliage
