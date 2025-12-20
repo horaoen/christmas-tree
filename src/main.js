@@ -43,9 +43,6 @@ window.addEventListener('mousemove', (event) => {
     
     const hitOrnament = christmasTree.ornamentManager.handlePick(intersects);
     christmasTree.ornamentManager.highlight(hitOrnament);
-    
-    // 改变鼠标指针样式 (直接设置 body 以避免 canvas 层级遮挡)
-    document.body.style.cursor = hitOrnament ? 'pointer' : 'default';
 });
 
 // Setup Gesture Controller
