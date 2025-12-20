@@ -4,7 +4,9 @@ import { OrnamentManager, ChristmasTree } from './tree.js';
 
 describe('ChristmasTree integration', () => {
     it('should initialize with an OrnamentManager', () => {
-        const tree = new ChristmasTree();
+        const mockScene = { attach: vi.fn(), add: vi.fn() };
+        const mockCamera = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), getWorldDirection: vi.fn() };
+        const tree = new ChristmasTree(mockScene, mockCamera);
         expect(tree.ornamentManager).toBeDefined();
         expect(tree.ornamentManager instanceof OrnamentManager).toBe(true);
     });
@@ -13,10 +15,19 @@ describe('ChristmasTree integration', () => {
 describe('OrnamentManager', () => {
     let treeObject;
     let manager;
+    let mockScene;
+    let mockCamera;
 
     beforeEach(() => {
         treeObject = new THREE.Object3D();
-        manager = new OrnamentManager(treeObject);
+        treeObject.attach = vi.fn(); // Mock attach for treeObject
+        mockScene = { attach: vi.fn(), add: vi.fn() };
+        mockCamera = { 
+            position: new THREE.Vector3(), 
+            quaternion: new THREE.Quaternion(), 
+            getWorldDirection: vi.fn((vec) => vec.set(0, 0, -1)) 
+        };
+        manager = new OrnamentManager(treeObject, mockScene, mockCamera);
     });
 
     it('should initialize with an empty ornaments array', () => {
@@ -40,8 +51,11 @@ describe('OrnamentManager', () => {
         });
 
         manager.loadOrnaments(config);
-        // ornaments[0] 现在是 Group，children[1] 是 photoMesh
-        const photoMesh = manager.ornaments[0].children[1];
+        // ornaments[0] 是 Group
+        // children[0]: frameMesh
+        // children[1]: matteMesh
+        // children[2]: photoMesh
+        const photoMesh = manager.ornaments[0].children[2];
         expect(photoMesh.material.map).toBe(texture);
     });
 
@@ -52,9 +66,11 @@ describe('OrnamentManager', () => {
         
         manager.select(ornament);
         expect(manager.selectedOrnament).toBe(ornament);
+        expect(mockScene.attach).toHaveBeenCalledWith(ornament); // Verify scene attachment
         
         manager.select(null);
         expect(manager.selectedOrnament).toBeNull();
+        expect(treeObject.attach).toHaveBeenCalledWith(ornament); // Verify return to tree
     });
 
     it('should update animations', () => {

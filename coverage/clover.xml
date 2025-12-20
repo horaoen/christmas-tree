@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1766199281782" clover="3.2.0">
-  <project timestamp="1766199281782" name="All files">
+<coverage generated="1766199386816" clover="3.2.0">
+  <project timestamp="1766199386816" name="All files">
     <metrics statements="215" coveredstatements="187" conditionals="43" coveredconditionals="24" methods="21" coveredmethods="10" elements="279" coveredelements="221" complexity="0" loc="215" ncloc="215" packages="1" files="1" classes="1"/>
     <file name="tree.js" path="/Users/horaoen/dev/repo/christmas-tree/src/webgl/tree.js">
       <metrics statements="215" coveredstatements="187" conditionals="43" coveredconditionals="24" methods="21" coveredmethods="10"/>
@@ -129,15 +129,15 @@
       <line num="401" count="25000" type="stmt"/>
       <line num="402" count="25000" type="stmt"/>
       <line num="403" count="25000" type="cond" truecount="2" falsecount="0"/>
-      <line num="404" count="7639" type="stmt"/>
-      <line num="406" count="17361" type="stmt"/>
+      <line num="404" count="7613" type="stmt"/>
+      <line num="406" count="17387" type="stmt"/>
       <line num="408" count="25000" type="stmt"/>
       <line num="409" count="25000" type="stmt"/>
       <line num="412" count="25000" type="cond" truecount="4" falsecount="0"/>
-      <line num="413" count="1245" type="stmt"/>
-      <line num="414" count="1245" type="stmt"/>
-      <line num="415" count="1245" type="stmt"/>
-      <line num="416" count="1245" type="stmt"/>
+      <line num="413" count="1251" type="stmt"/>
+      <line num="414" count="1251" type="stmt"/>
+      <line num="415" count="1251" type="stmt"/>
+      <line num="416" count="1251" type="stmt"/>
       <line num="424" count="1" type="stmt"/>
       <line num="425" count="1" type="stmt"/>
       <line num="426" count="1" type="stmt"/>
@@ -197,10 +197,10 @@
       <line num="570" count="1" type="stmt"/>
       <line num="571" count="1" type="stmt"/>
       <line num="573" count="1" type="stmt"/>
-      <line num="574" count="1245" type="stmt"/>
-      <line num="575" count="1245" type="stmt"/>
-      <line num="576" count="1245" type="stmt"/>
-      <line num="577" count="1245" type="stmt"/>
+      <line num="574" count="1251" type="stmt"/>
+      <line num="575" count="1251" type="stmt"/>
+      <line num="576" count="1251" type="stmt"/>
+      <line num="577" count="1251" type="stmt"/>
       <line num="579" count="1" type="stmt"/>
       <line num="583" count="1" type="cond" truecount="3" falsecount="1"/>
       <line num="584" count="1" type="stmt"/>

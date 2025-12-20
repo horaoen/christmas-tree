@@ -15,7 +15,16 @@ export function setupScene(canvas) {
 
     camera.position.z = 5;
 
-    const christmasTree = new ChristmasTree();
+    // --- Lighting Setup ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // 基础环境光
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 2.0); // 降低强度至 2.0
+    pointLight.position.set(3, 3, 3); // 稍微拉远
+    scene.add(pointLight);
+    // ----------------------
+
+    const christmasTree = new ChristmasTree(scene, camera);
     scene.add(christmasTree.getTreeObject());
 
     const snowSystem = new SnowSystem(scene, camera);

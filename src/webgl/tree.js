@@ -117,8 +117,10 @@ const starFragmentShader = `
 `;
 
 export class OrnamentManager {
-    constructor(treeObject) {
+    constructor(treeObject, scene, camera) {
         this.treeObject = treeObject;
+        this.scene = scene;
+        this.camera = camera;
         this.ornaments = [];
         this.loader = new THREE.TextureLoader();
         this.selectedOrnament = null;
@@ -130,7 +132,18 @@ export class OrnamentManager {
      * @param {THREE.Mesh|null} ornament 
      */
     select(ornament) {
+        // Handle previous selection
+        if (this.selectedOrnament && this.selectedOrnament !== ornament) {
+            // Return previous to tree
+            this.treeObject.attach(this.selectedOrnament);
+        }
+
         this.selectedOrnament = ornament;
+
+        if (this.selectedOrnament) {
+            // Move to scene scope for independent movement
+            this.scene.attach(this.selectedOrnament);
+        }
     }
 
     /**
@@ -139,35 +152,56 @@ export class OrnamentManager {
      */
     loadOrnaments(config) {
         config.forEach(item => {
-            // 创建一个组来容纳相框和照片
             const group = new THREE.Group();
 
             // 1. 照片层 (Photo)
-            const photoGeometry = new THREE.PlaneGeometry(0.2, 0.2); // 保持正方形比例适合照片
-            const photoMaterial = new THREE.MeshStandardMaterial({ 
+            const photoGeometry = new THREE.PlaneGeometry(0.16, 0.16); 
+            // 大幅降低亮度以避免 Bloom 过曝
+            const photoMaterial = new THREE.MeshBasicMaterial({
                 transparent: true,
                 side: THREE.DoubleSide,
-                roughness: 0.7,
-                metalness: 0.1,
-                emissive: new THREE.Color(0xffffff),
-                emissiveIntensity: 0.05
+                color: 0x666666 // 进一步调暗
             });
             const photoMesh = new THREE.Mesh(photoGeometry, photoMaterial);
-            photoMesh.position.z = 0.01; // 稍微突起，避免 z-fighting
+            photoMesh.position.z = 0.02; 
 
-            // 2. 边框层 (Frame) - 稍大一点的白色背景板
-            const frameGeometry = new THREE.PlaneGeometry(0.24, 0.24); // 边框宽 0.02
+            // 2. 衬底层 (Matte - White Border) 
+            const matteGeometry = new THREE.PlaneGeometry(0.18, 0.18); // 略微增大以确保边框清晰
+            const matteMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 }); // 调暗衬底
+            const matteMesh = new THREE.Mesh(matteGeometry, matteMaterial);
+            matteMesh.position.z = 0.01;
+
+            // 3. 外框层 (Outer Wood Frame) - 深色胡桃木
+            const frameGeometry = new THREE.BoxGeometry(0.22, 0.22, 0.01); 
             const frameMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff, // 白色相框
-                roughness: 0.4,
-                metalness: 0.2
+                color: 0x654321, // Dark Walnut (深胡桃木色)
+                roughness: 0.4,  // 半光泽，看起来像上过漆的木头
+                metalness: 0.0
             });
+            
+            // 加载并应用木纹纹理
+            this.loader.load('images/wood_texture.jpg', (texture) => {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(1, 1);
+                frameMaterial.map = texture;
+                frameMaterial.needsUpdate = true;
+            });
+
             const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
 
+            // 4. 顶部挂环
+            const ringGeometry = new THREE.TorusGeometry(0.02, 0.003, 8, 16);
+            const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 });
+            const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+            ringMesh.position.set(0, 0.115, 0);
+
             group.add(frameMesh);
+            group.add(matteMesh);
             group.add(photoMesh);
+            group.add(ringMesh);
             
-            // 加载纹理
+            // 加载照片纹理
             this.loader.load(item.path, (texture) => {
                 photoMaterial.map = texture;
                 photoMaterial.needsUpdate = true;
@@ -178,11 +212,12 @@ export class OrnamentManager {
                 group.position.set(...item.position);
             }
             
-            // 存储元数据 (存储在 Group 上)
+            // 存储元数据
             group.userData.id = item.id;
             group.userData.path = item.path;
             group.userData.originalPosition = group.position.clone();
             group.userData.originalScale = group.scale.clone();
+            group.userData.originalQuaternion = group.quaternion.clone();
             
             this.ornaments.push(group);
             this.treeObject.add(group);
@@ -192,14 +227,21 @@ export class OrnamentManager {
     /**
      * 处理拾取结果
      * @param {Array} intersects Raycaster 的交集数组
-     * @returns {THREE.Mesh|null} 命中的挂件物体
+     * @returns {THREE.Group|null} 命中的挂件组
      */
     handlePick(intersects) {
         if (intersects.length > 0) {
-            const hit = intersects.find(intersect => 
-                this.ornaments.some(o => o === intersect.object)
-            );
-            return hit ? hit.object : null;
+            // 遍历所有交点
+            for (const intersect of intersects) {
+                // 向上查找是否属于某个挂件组
+                let current = intersect.object;
+                while (current) {
+                    if (this.ornaments.includes(current)) {
+                        return current;
+                    }
+                    current = current.parent;
+                }
+            }
         }
         return null;
     }
@@ -222,27 +264,45 @@ export class OrnamentManager {
             const isHovered = ornament === this.hoveredOrnament;
             
             let targetScale = ornament.userData.originalScale.clone();
-            let targetPos = ornament.userData.originalPosition.clone();
+            let targetPos;
+            let targetQuat;
 
             if (isSelected) {
-                // 选中状态：大幅放大
-                targetScale.set(5.0, 5.0, 5.0);
-                const forward = ornament.userData.originalPosition.clone().normalize().multiplyScalar(1.5);
-                targetPos.add(forward);
-            } else if (isHovered) {
-                // 悬停状态：轻微放大
-                targetScale.multiplyScalar(1.5); // 增加到 1.5 以更明显
+                // 选中状态：移动到摄像机前方
+                // 目标位置：摄像机位置 + 摄像机前方 1.5 米
+                const cameraDirection = new THREE.Vector3();
+                this.camera.getWorldDirection(cameraDirection);
+                targetPos = this.camera.position.clone().add(cameraDirection.multiplyScalar(1.5));
+                
+                // 目标旋转：面向摄像机
+                targetQuat = this.camera.quaternion.clone();
+
+                // 选中时稍微放大
+                targetScale.set(2.0, 2.0, 2.0); 
+
+            } else {
+                // 非选中状态：回归原位 (Local Space)
+                targetPos = ornament.userData.originalPosition.clone();
+                targetQuat = ornament.userData.originalQuaternion || new THREE.Quaternion();
+
+                if (isHovered) {
+                    // 悬停状态：轻微放大
+                    targetScale.multiplyScalar(1.5);
+                }
             }
 
             // 统一插值
             ornament.scale.lerp(targetScale, 0.1);
             ornament.position.lerp(targetPos, 0.1);
+            if (targetQuat) {
+                ornament.quaternion.slerp(targetQuat, 0.1);
+            }
         });
     }
 }
 
 export class ChristmasTree {
-    constructor(particleCount = 25000, treeHeight = 3, baseRadius = 1.2) {
+    constructor(scene, camera, particleCount = 25000, treeHeight = 3, baseRadius = 1.2) {
         this.particleCount = particleCount; // Approximate total for foliage
         this.treeHeight = treeHeight;
         this.baseRadius = baseRadius;
@@ -262,8 +322,7 @@ export class ChristmasTree {
             uScatter: { value: 0 }
         };
 
-        this.ornamentManager = new OrnamentManager(this.treeObject);
-
+        this.ornamentManager = new OrnamentManager(this.treeObject, scene, camera);
         this.colorThemes = [
             // Pink & White: The user's preferred style
             { 
