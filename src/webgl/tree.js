@@ -137,20 +137,21 @@ export class OrnamentManager {
      * 加载预设挂件
      * @param {Array} config 挂件配置列表
      */
-        loadOrnaments(config) {
-            config.forEach(item => {
-                const geometry = new THREE.PlaneGeometry(0.2, 0.2);
-                // 升级为 Standard 材质以支持光照和自发光，提升质感
-                const material = new THREE.MeshStandardMaterial({
-                    transparent: true,
-                    side: THREE.DoubleSide,
-                    roughness: 0.3,
-                    metalness: 0.5,
-                    emissive: new THREE.Color(0xffffff),
-                    emissiveIntensity: 0.2 // 轻微自发光，使其在暗色背景下更亮丽
-                });
-                const mesh = new THREE.Mesh(geometry, material);            
-            // 加载纹理
+            loadOrnaments(config) {
+                config.forEach(item => {
+                    // 改为圆形几何体，半径 0.12 (直径 0.24)
+                    const geometry = new THREE.CircleGeometry(0.12, 32);
+                    
+                    // 调整材质：降低自发光，增加粗糙度，使其更柔和
+                    const material = new THREE.MeshStandardMaterial({ 
+                        transparent: true,
+                        side: THREE.DoubleSide,
+                        roughness: 0.7,       // 增加粗糙度，减少镜面反射高光
+                        metalness: 0.1,       // 降低金属度，减少刺眼反光
+                        emissive: new THREE.Color(0xffffff),
+                        emissiveIntensity: 0.05 // 大幅降低自发光 (原 0.2)，防止过曝
+                    });
+                    const mesh = new THREE.Mesh(geometry, material);            // 加载纹理
             this.loader.load(item.path, (texture) => {
                 material.map = texture;
                 material.needsUpdate = true;
