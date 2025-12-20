@@ -122,6 +122,7 @@ export class OrnamentManager {
         this.ornaments = [];
         this.loader = new THREE.TextureLoader();
         this.selectedOrnament = null;
+        this.hoveredOrnament = null;
     }
 
     /**
@@ -188,16 +189,7 @@ export class OrnamentManager {
      * @param {THREE.Mesh|null} pickedOrnament 选中的挂件
      */
     highlight(pickedOrnament) {
-        // 如果已经有选中的挂件正在展示，则不进行 hover 高亮
-        if (this.selectedOrnament) return;
-
-        this.ornaments.forEach(ornament => {
-            if (ornament === pickedOrnament) {
-                ornament.scale.set(1.2, 1.2, 1.2);
-            } else {
-                ornament.scale.set(1.0, 1.0, 1.0);
-            }
-        });
+        this.hoveredOrnament = pickedOrnament;
     }
 
     /**
@@ -207,25 +199,24 @@ export class OrnamentManager {
     update(deltaTime) {
         this.ornaments.forEach(ornament => {
             const isSelected = ornament === this.selectedOrnament;
+            const isHovered = ornament === this.hoveredOrnament;
             
-            // 目标缩放
-            const targetScaleValue = isSelected ? 3.0 : (isSelected ? 3.0 : 1.0); 
-            // 如果没被选中，但是被 highlight 了（由 highlight 方法控制），这里就不覆盖 scale
-            // 但为了平滑，我们在这里统一处理
-            
-            // 简单起见，我们只在这里处理选中后的放大动画
+            let targetScale = ornament.userData.originalScale.clone();
+            let targetPos = ornament.userData.originalPosition.clone();
+
             if (isSelected) {
-                ornament.scale.lerp(new THREE.Vector3(3, 3, 3), 0.1);
-                // 稍微向前移动一点，使其浮现在树体之上
-                const forward = ornament.userData.originalPosition.clone().normalize().multiplyScalar(0.2);
-                const targetPos = ornament.userData.originalPosition.clone().add(forward);
-                ornament.position.lerp(targetPos, 0.1);
-            } else {
-                // 如果没有被 highlight，则缩回原状
-                // 注意：highlight 方法会直接设置 scale，所以这里只处理 position 恢复
-                ornament.position.lerp(ornament.userData.originalPosition, 0.1);
-                // 只有当不是正在被 hover 的时候才缩回 1.0 (由 highlight 方法外部控制更简单)
+                // 选中状态：大幅放大
+                targetScale.set(5.0, 5.0, 5.0);
+                const forward = ornament.userData.originalPosition.clone().normalize().multiplyScalar(1.5);
+                targetPos.add(forward);
+            } else if (isHovered) {
+                // 悬停状态：轻微放大
+                targetScale.multiplyScalar(1.5); // 增加到 1.5 以更明显
             }
+
+            // 统一插值
+            ornament.scale.lerp(targetScale, 0.1);
+            ornament.position.lerp(targetPos, 0.1);
         });
     }
 }

@@ -47,4 +47,17 @@ describe('OrnamentManager', () => {
         // 主要是确保 update 方法可调用且不报错
         expect(() => manager.update(0.016)).not.toThrow();
     });
+
+    it('should highlight an ornament', () => {
+        const config = [{ id: 'bell', path: 'images/ornaments/bell.png', position: [0, 0, 0] }];
+        manager.loadOrnaments(config);
+        const ornament = manager.ornaments[0];
+        
+        manager.highlight(ornament);
+        manager.update(0.016);
+        expect(ornament.scale.x).toBeGreaterThan(1.0);
+        
+        manager.highlight(null);
+        expect(manager.hoveredOrnament).toBeNull();
+    });
 });
