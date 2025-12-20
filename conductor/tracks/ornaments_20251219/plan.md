@@ -21,5 +21,5 @@
 ## Phase 4: 抛光与测试
 - [x] Task: 调整挂件在树上的分布位置，确保视觉美感（避免重叠）。 (19d92b4)
 - [x] Task: 优化粉白主题下的挂件材质表现，确保符合产品准则中的“光影质感”。 (7a431eb)
-- [~] Task: 验证 80% 代码覆盖率要求（针对管理逻辑）。
+- [x] Task: 验证 80% 代码覆盖率要求（针对管理逻辑）。 (6d1a20c)
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: 抛光与测试' (Protocol in workflow.md)
