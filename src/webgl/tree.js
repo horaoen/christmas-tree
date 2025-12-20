@@ -285,9 +285,9 @@ export class ChristmasTree {
 
         // 加载预设挂件
         this.ornamentManager.loadOrnaments([
-            { id: 'bell', path: 'images/ornaments/bell.png', position: [0.5, 0.5, 0.5] },
-            { id: 'gift', path: 'images/ornaments/gift.png', position: [-0.5, -0.2, 0.8] },
-            { id: 'snowflake', path: 'images/ornaments/snowflake.png', position: [0.2, 1.2, -0.4] }
+            { id: 'bell', path: 'images/ornaments/bell.png', position: [0.6, 0.2, 0.6] },
+            { id: 'gift', path: 'images/ornaments/gift.png', position: [-0.7, -0.5, 0.4] },
+            { id: 'snowflake', path: 'images/ornaments/snowflake.png', position: [0.1, 1.0, -0.5] }
         ]);
     }
 
