@@ -11,7 +11,7 @@
 - [x] Task: 将生成的挂件物体添加到 `ChristmasTree` 的 3D 分组中，确保其随树旋转。 (cc9f785)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: 挂件生成与渲染' (Protocol in workflow.md)
 
-## Phase 3: 交互逻辑实现
+## Phase 3: 交互逻辑实现 [checkpoint: 32374e2]
 - [x] Task: 集成 `THREE.Raycaster` 到 `src/main.js` 的事件监听循环中。 (0de6725)
 - [x] Task: 实现拾取反馈（如鼠标悬停时挂件高亮）。 (529d84d)
 - [x] Task: 编写挂件放大的补间动画逻辑，实现“选中展示”效果。 (2b5229d)
