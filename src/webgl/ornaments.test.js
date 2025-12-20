@@ -48,4 +48,20 @@ describe('OrnamentManager', () => {
         manager.loadOrnaments(config);
         expect(manager.ornaments[0].material.map).toBe(texture);
     });
+
+    it('should have a handlePick method', () => {
+        expect(typeof manager.handlePick).toBe('function');
+    });
+
+    it('should identify intersected ornaments', () => {
+        const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
+        manager.loadOrnaments(config);
+        const ornament = manager.ornaments[0];
+        
+        // 模拟 Raycaster 的 intersects 结果
+        const intersects = [{ object: ornament }];
+        const picked = manager.handlePick(intersects);
+        
+        expect(picked).toBe(ornament);
+    });
 });

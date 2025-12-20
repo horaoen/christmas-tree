@@ -1,4 +1,5 @@
 import './style.css';
+import * as THREE from 'three';
 import { setupScene } from './webgl/scene.js';
 import { createHandLandmarker, setupCamera, detectHands } from './gesture/hand-tracking.js';
 import { GestureController } from './gesture/gesture-controller.jsx';
@@ -10,7 +11,30 @@ threeCanvas.id = 'three-canvas';
 app.appendChild(threeCanvas);
 
 // Setup Scene
-const { christmasTree, snowSystem } = setupScene(threeCanvas);
+const { scene, camera, renderer, christmasTree, snowSystem } = setupScene(threeCanvas);
+
+// Raycaster for interactions
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('click', (event) => {
+    // Calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Update the picking ray with the camera and mouse position
+    raycaster.setFromCamera(mouse, camera);
+
+    // Calculate objects intersecting the picking ray
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    const hitOrnament = christmasTree.ornamentManager.handlePick(intersects);
+    if (hitOrnament) {
+        console.log('Picked ornament:', hitOrnament.userData.id);
+        // 这里将在后续 Task 中实现放大动画
+    }
+});
 
 // Setup Gesture Controller
 const gestureController = new GestureController();

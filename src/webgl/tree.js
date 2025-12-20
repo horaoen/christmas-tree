@@ -158,6 +158,22 @@ export class OrnamentManager {
     }
 
     /**
+     * 处理拾取结果
+     * @param {Array} intersects Raycaster 的交集数组
+     * @returns {THREE.Mesh|null} 命中的挂件物体
+     */
+    handlePick(intersects) {
+        if (intersects.length > 0) {
+            // 找到第一个属于管理范围内的挂件
+            const hit = intersects.find(intersect => 
+                this.ornaments.some(o => o === intersect.object)
+            );
+            return hit ? hit.object : null;
+        }
+        return null;
+    }
+
+    /**
      * 更新动画
      * @param {number} deltaTime 
      */
