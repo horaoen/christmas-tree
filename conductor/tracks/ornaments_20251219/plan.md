@@ -12,7 +12,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: 挂件生成与渲染' (Protocol in workflow.md)
 
 ## Phase 3: 交互逻辑实现
-- [ ] Task: 集成 `THREE.Raycaster` 到 `src/main.js` 的事件监听循环中。
+- [x] Task: 集成 `THREE.Raycaster` 到 `src/main.js` 的事件监听循环中。 (0de6725)
 - [ ] Task: 实现拾取反馈（如鼠标悬停时挂件高亮）。
 - [ ] Task: 编写挂件放大的补间动画逻辑，实现“选中展示”效果。
 - [ ] Task: 实现“点击背景返回”或“再次点击返回”的逻辑。
