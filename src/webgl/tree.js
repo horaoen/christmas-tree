@@ -137,40 +137,55 @@ export class OrnamentManager {
      * 加载预设挂件
      * @param {Array} config 挂件配置列表
      */
-            loadOrnaments(config) {
-                config.forEach(item => {
-                    // 改为圆形几何体，半径 0.12 (直径 0.24)
-                    const geometry = new THREE.CircleGeometry(0.12, 32);
-                    
-                    // 调整材质：降低自发光，增加粗糙度，使其更柔和
-                    const material = new THREE.MeshStandardMaterial({ 
-                        transparent: true,
-                        side: THREE.DoubleSide,
-                        roughness: 0.7,       // 增加粗糙度，减少镜面反射高光
-                        metalness: 0.1,       // 降低金属度，减少刺眼反光
-                        emissive: new THREE.Color(0xffffff),
-                        emissiveIntensity: 0.05 // 大幅降低自发光 (原 0.2)，防止过曝
-                    });
-                    const mesh = new THREE.Mesh(geometry, material);            // 加载纹理
+    loadOrnaments(config) {
+        config.forEach(item => {
+            // 创建一个组来容纳相框和照片
+            const group = new THREE.Group();
+
+            // 1. 照片层 (Photo)
+            const photoGeometry = new THREE.PlaneGeometry(0.2, 0.2); // 保持正方形比例适合照片
+            const photoMaterial = new THREE.MeshStandardMaterial({ 
+                transparent: true,
+                side: THREE.DoubleSide,
+                roughness: 0.7,
+                metalness: 0.1,
+                emissive: new THREE.Color(0xffffff),
+                emissiveIntensity: 0.05
+            });
+            const photoMesh = new THREE.Mesh(photoGeometry, photoMaterial);
+            photoMesh.position.z = 0.01; // 稍微突起，避免 z-fighting
+
+            // 2. 边框层 (Frame) - 稍大一点的白色背景板
+            const frameGeometry = new THREE.PlaneGeometry(0.24, 0.24); // 边框宽 0.02
+            const frameMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff, // 白色相框
+                roughness: 0.4,
+                metalness: 0.2
+            });
+            const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+
+            group.add(frameMesh);
+            group.add(photoMesh);
+            
+            // 加载纹理
             this.loader.load(item.path, (texture) => {
-                material.map = texture;
-                material.needsUpdate = true;
+                photoMaterial.map = texture;
+                photoMaterial.needsUpdate = true;
             });
 
             // 设置位置
             if (item.position) {
-                mesh.position.set(...item.position);
+                group.position.set(...item.position);
             }
             
-            // 存储元数据和初始状态
-            mesh.userData.id = item.id;
-            mesh.userData.path = item.path;
-            mesh.userData.originalPosition = mesh.position.clone();
-            mesh.userData.originalScale = mesh.scale.clone();
-            mesh.userData.displayScale = 2.0; // 选中时的放大倍数
+            // 存储元数据 (存储在 Group 上)
+            group.userData.id = item.id;
+            group.userData.path = item.path;
+            group.userData.originalPosition = group.position.clone();
+            group.userData.originalScale = group.scale.clone();
             
-            this.ornaments.push(mesh);
-            this.treeObject.add(mesh);
+            this.ornaments.push(group);
+            this.treeObject.add(group);
         });
     }
 

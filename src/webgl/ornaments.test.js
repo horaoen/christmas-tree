@@ -31,6 +31,20 @@ describe('OrnamentManager', () => {
         expect(manager.ornaments.length).toBe(1);
     });
 
+    it('should assign textures to ornaments', () => {
+        const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
+        const texture = new THREE.Texture();
+        vi.spyOn(manager.loader, 'load').mockImplementation((path, onLoad) => {
+            if (onLoad) onLoad(texture);
+            return texture;
+        });
+
+        manager.loadOrnaments(config);
+        // ornaments[0] 现在是 Group，children[1] 是 photoMesh
+        const photoMesh = manager.ornaments[0].children[1];
+        expect(photoMesh.material.map).toBe(texture);
+    });
+
     it('should handle selecting an ornament', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         manager.loadOrnaments(config);
