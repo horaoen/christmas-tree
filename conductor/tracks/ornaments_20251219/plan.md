@@ -5,7 +5,7 @@
 - [x] Task: 在 `src/webgl/tree.js` 中定义 `OrnamentManager` 类雏形，负责挂件的加载与管理。 (6b0ed83)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: 准备与架构设计' (Protocol in workflow.md)
 
-## Phase 2: 挂件生成与渲染
+## Phase 2: 挂件生成与渲染 [checkpoint: f20e3fb]
 - [x] Task: 实现挂件配置加载逻辑，支持多张图片。 (7863588)
 - [x] Task: 编写挂件 3D 物体创建函数，将图片纹理应用到 Mesh 上。 (1ea5d72)
 - [x] Task: 将生成的挂件物体添加到 `ChristmasTree` 的 3D 分组中，确保其随树旋转。 (cc9f785)
