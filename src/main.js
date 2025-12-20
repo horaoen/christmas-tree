@@ -26,9 +26,12 @@ window.addEventListener('click', (event) => {
     
     const hitOrnament = christmasTree.ornamentManager.handlePick(intersects);
     
-    // 如果点击了挂件，则选中它
-    // 如果点击了背景（未命中挂件），则取消选中
-    christmasTree.ornamentManager.select(hitOrnament);
+    // 如果点击的是当前已经选中的挂件，则取消选中（Toggle 行为）
+    if (hitOrnament && christmasTree.ornamentManager.selectedOrnament === hitOrnament) {
+        christmasTree.ornamentManager.select(null);
+    } else {
+        christmasTree.ornamentManager.select(hitOrnament);
+    }
 });
 
 window.addEventListener('mousemove', (event) => {
