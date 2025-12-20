@@ -64,4 +64,16 @@ describe('OrnamentManager', () => {
         
         expect(picked).toBe(ornament);
     });
+
+    it('should highlight an ornament', () => {
+        const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
+        manager.loadOrnaments(config);
+        const ornament = manager.ornaments[0];
+        
+        manager.highlight(ornament);
+        expect(ornament.scale.x).toBeGreaterThan(1.0);
+        
+        manager.highlight(null);
+        expect(ornament.scale.x).toBe(1.0);
+    });
 });

@@ -18,22 +18,21 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 window.addEventListener('click', (event) => {
-    // Calculate mouse position in normalized device coordinates
-    // (-1 to +1) for both components
+    // ... (保持现有代码)
+});
+
+window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    // Update the picking ray with the camera and mouse position
     raycaster.setFromCamera(mouse, camera);
-
-    // Calculate objects intersecting the picking ray
     const intersects = raycaster.intersectObjects(scene.children, true);
     
     const hitOrnament = christmasTree.ornamentManager.handlePick(intersects);
-    if (hitOrnament) {
-        console.log('Picked ornament:', hitOrnament.userData.id);
-        // 这里将在后续 Task 中实现放大动画
-    }
+    christmasTree.ornamentManager.highlight(hitOrnament);
+    
+    // 改变鼠标指针样式
+    threeCanvas.style.cursor = hitOrnament ? 'pointer' : 'default';
 });
 
 // Setup Gesture Controller

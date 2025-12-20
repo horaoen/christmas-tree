@@ -174,6 +174,20 @@ export class OrnamentManager {
     }
 
     /**
+     * 对挂件进行高亮处理
+     * @param {THREE.Mesh|null} pickedOrnament 选中的挂件
+     */
+    highlight(pickedOrnament) {
+        this.ornaments.forEach(ornament => {
+            if (ornament === pickedOrnament) {
+                ornament.scale.set(1.2, 1.2, 1.2);
+            } else {
+                ornament.scale.set(1.0, 1.0, 1.0);
+            }
+        });
+    }
+
+    /**
      * 更新动画
      * @param {number} deltaTime 
      */
