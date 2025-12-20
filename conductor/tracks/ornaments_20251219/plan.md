@@ -14,7 +14,7 @@
 ## Phase 3: 交互逻辑实现
 - [x] Task: 集成 `THREE.Raycaster` 到 `src/main.js` 的事件监听循环中。 (0de6725)
 - [x] Task: 实现拾取反馈（如鼠标悬停时挂件高亮）。 (529d84d)
-- [ ] Task: 编写挂件放大的补间动画逻辑，实现“选中展示”效果。
+- [x] Task: 编写挂件放大的补间动画逻辑，实现“选中展示”效果。 (2b5229d)
 - [ ] Task: 实现“点击背景返回”或“再次点击返回”的逻辑。
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: 交互逻辑实现' (Protocol in workflow.md)
 
