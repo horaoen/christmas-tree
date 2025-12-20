@@ -18,7 +18,17 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 window.addEventListener('click', (event) => {
-    // ... (保持现有代码)
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    const hitOrnament = christmasTree.ornamentManager.handlePick(intersects);
+    
+    // 如果点击了挂件，则选中它
+    // 如果点击了背景（未命中挂件），则取消选中
+    christmasTree.ornamentManager.select(hitOrnament);
 });
 
 window.addEventListener('mousemove', (event) => {

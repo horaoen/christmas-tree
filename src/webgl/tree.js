@@ -121,6 +121,15 @@ export class OrnamentManager {
         this.treeObject = treeObject;
         this.ornaments = [];
         this.loader = new THREE.TextureLoader();
+        this.selectedOrnament = null;
+    }
+
+    /**
+     * 选择挂件进行展示
+     * @param {THREE.Mesh|null} ornament 
+     */
+    select(ornament) {
+        this.selectedOrnament = ornament;
     }
 
     /**
@@ -130,7 +139,6 @@ export class OrnamentManager {
     loadOrnaments(config) {
         config.forEach(item => {
             const geometry = new THREE.PlaneGeometry(0.2, 0.2);
-            // 初始化材质，颜色设为白色以正确混合纹理颜色
             const material = new THREE.MeshBasicMaterial({ 
                 transparent: true,
                 side: THREE.DoubleSide
@@ -148,9 +156,12 @@ export class OrnamentManager {
                 mesh.position.set(...item.position);
             }
             
-            // 存储元数据
+            // 存储元数据和初始状态
             mesh.userData.id = item.id;
             mesh.userData.path = item.path;
+            mesh.userData.originalPosition = mesh.position.clone();
+            mesh.userData.originalScale = mesh.scale.clone();
+            mesh.userData.displayScale = 2.0; // 选中时的放大倍数
             
             this.ornaments.push(mesh);
             this.treeObject.add(mesh);
@@ -164,7 +175,6 @@ export class OrnamentManager {
      */
     handlePick(intersects) {
         if (intersects.length > 0) {
-            // 找到第一个属于管理范围内的挂件
             const hit = intersects.find(intersect => 
                 this.ornaments.some(o => o === intersect.object)
             );
@@ -178,6 +188,9 @@ export class OrnamentManager {
      * @param {THREE.Mesh|null} pickedOrnament 选中的挂件
      */
     highlight(pickedOrnament) {
+        // 如果已经有选中的挂件正在展示，则不进行 hover 高亮
+        if (this.selectedOrnament) return;
+
         this.ornaments.forEach(ornament => {
             if (ornament === pickedOrnament) {
                 ornament.scale.set(1.2, 1.2, 1.2);
@@ -192,7 +205,28 @@ export class OrnamentManager {
      * @param {number} deltaTime 
      */
     update(deltaTime) {
-        // 逻辑将在 Phase 3 实现
+        this.ornaments.forEach(ornament => {
+            const isSelected = ornament === this.selectedOrnament;
+            
+            // 目标缩放
+            const targetScaleValue = isSelected ? 3.0 : (isSelected ? 3.0 : 1.0); 
+            // 如果没被选中，但是被 highlight 了（由 highlight 方法控制），这里就不覆盖 scale
+            // 但为了平滑，我们在这里统一处理
+            
+            // 简单起见，我们只在这里处理选中后的放大动画
+            if (isSelected) {
+                ornament.scale.lerp(new THREE.Vector3(3, 3, 3), 0.1);
+                // 稍微向前移动一点，使其浮现在树体之上
+                const forward = ornament.userData.originalPosition.clone().normalize().multiplyScalar(0.2);
+                const targetPos = ornament.userData.originalPosition.clone().add(forward);
+                ornament.position.lerp(targetPos, 0.1);
+            } else {
+                // 如果没有被 highlight，则缩回原状
+                // 注意：highlight 方法会直接设置 scale，所以这里只处理 position 恢复
+                ornament.position.lerp(ornament.userData.originalPosition, 0.1);
+                // 只有当不是正在被 hover 的时候才缩回 1.0 (由 highlight 方法外部控制更简单)
+            }
+        });
     }
 }
 
@@ -504,6 +538,7 @@ export class ChristmasTree {
 
     animate(deltaTime) {
         this.uniforms.uTime.value += deltaTime;
+        this.ornamentManager.update(deltaTime);
 
         // Calculate Scatter Factor based on Scale
         // When scale > 2.0, start scattering. Smooth transition.
