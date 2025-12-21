@@ -193,7 +193,7 @@ export class OrnamentManager {
         const photoMaterial = new THREE.MeshBasicMaterial({
             transparent: true,
             side: THREE.DoubleSide,
-            color: 0x444444 // 大幅调暗，应对强 Bloom
+            color: 0xcccccc // 调整为 80% 亮度，平衡清晰度与 Bloom 效果
         });
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
