@@ -166,6 +166,27 @@ describe('OrnamentManager', () => {
         expect(normal2.y).toBeGreaterThan(0);
     });
 
+    it('should generate positions within tree boundaries', () => {
+        const height = 3.0;
+        const radius = 1.2;
+        const tree = new ChristmasTree(mockScene, mockCamera, 25000, height, radius);
+        const positions = tree.calculateOrnamentPositions(20);
+
+        positions.forEach(pos => {
+            // y range: [-1.5, 1.5]
+            expect(pos.y).toBeGreaterThanOrEqual(-height / 2);
+            expect(pos.y).toBeLessThanOrEqual(height / 2);
+
+            // Normalized height (0 at bottom, 1 at top)
+            const hRatio = (pos.y + height / 2) / height;
+            const maxRadiusAtY = radius * (1.0 - hRatio);
+            
+            // Allow small float margin
+            const currentRadius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+            expect(currentRadius).toBeLessThanOrEqual(maxRadiusAtY + 0.01);
+        });
+    });
+
     it('should handle selecting an ornament', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         manager.loadOrnaments(config);
