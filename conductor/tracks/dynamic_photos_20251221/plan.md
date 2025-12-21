@@ -21,7 +21,7 @@
 - [x] Task: 优化相册挂件的材质性能，确保多张照片下的流畅度 [ea5be32]
 - [x] Task: Conductor - User Manual Verification 'Phase 3: 内容扩展与集成' (Protocol in workflow.md)
 
-## Phase 4: 视觉打磨与最终验收
+## Phase 4: 视觉打磨与最终验收 [checkpoint: bb89679]
 - [x] Task: 调整相框材质细节（边缘高光、木纹适配）以增强 3D 质感 [646ea37]
 - [x] Task: 修复极端分布下的穿模或光照过曝问题 [52984bd]
 - [x] Task: 执行最终性能测试和交互验证（确保手势控制依然流畅） [9da4590]
