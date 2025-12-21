@@ -6,7 +6,7 @@
 - [x] Task: 重构 `OrnamentManager` 以支持动态比例的相框几何体（从 1:1 改为 3:4） [32cfeb7]
 - [x] Task: 编写测试验证相框比例和材质加载的正确性 [61b079d]
 - [x] Task: 更新 `OrnamentManager.loadOrnaments` 方法，支持更灵活的配置结构 [b41877e]
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: 基础重构与 3:4 相框实现' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: 基础重构与 3:4 相框实现' (Protocol in workflow.md)
 
 ## Phase 2: 智能分布算法开发
 - [ ] Task: 实现树表面坐标转换函数（基于高度 and 角度计算 3D 空间坐标）
