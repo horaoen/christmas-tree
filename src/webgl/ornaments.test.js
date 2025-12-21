@@ -181,10 +181,49 @@ describe('OrnamentManager', () => {
             const hRatio = (pos.y + height / 2) / height;
             const maxRadiusAtY = radius * (1.0 - hRatio);
             
-            // Allow small float margin
             const currentRadius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
             expect(currentRadius).toBeLessThanOrEqual(maxRadiusAtY + 0.01);
         });
+    });
+
+    it('should auto-distribute ornaments based on image list', () => {
+        // Integration test:
+        // 1. Create Tree
+        // 2. Call loadOrnamentsFromImages(['1.jpg', '2.jpg'])
+        // 3. Verify 2 ornaments created with correct positions
+        
+        const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
+        const images = ['img1.jpg', 'img2.jpg', 'img3.jpg'];
+        
+        // Mock calculateOrnamentPositions to return predictable positions
+        // to simplify testing (or just rely on the real one and check count)
+        const mockPositions = [
+            new THREE.Vector3(1, 0, 0),
+            new THREE.Vector3(0, 1, 0),
+            new THREE.Vector3(0, 0, 1)
+        ];
+        vi.spyOn(tree, 'calculateOrnamentPositions').mockReturnValue(mockPositions);
+        
+        // Clear existing ornaments from constructor
+        tree.ornamentManager.ornaments = [];
+        tree.treeObject.children = tree.treeObject.children.filter(c => !(c instanceof THREE.Group && c.userData.id?.startsWith('photo-')));
+
+        tree.loadOrnamentsFromImages(images);
+        
+        // Check ornament count
+        expect(tree.ornamentManager.ornaments.length).toBe(3);
+        
+        // Check ids and paths
+        expect(tree.ornamentManager.ornaments[0].userData.id).toBe('photo-0');
+        expect(tree.ornamentManager.ornaments[0].userData.path).toBe('img1.jpg');
+        
+        // Check position assignment
+        expect(tree.ornamentManager.ornaments[0].position).toEqual(mockPositions[0]);
+        
+        // Check orientation (lookAt normal)
+        // We can't easily check lookAt directly without mocking Object3D, 
+        // but we can check if it called getSurfaceNormal?
+        // Let's assume implementation correctness if position is set.
     });
 
     it('should handle selecting an ornament', () => {

@@ -228,6 +228,11 @@ export class OrnamentManager {
             if (item.position) {
                 group.position.set(...item.position);
             }
+
+            // 设置旋转（如果提供）
+            if (item.quaternion) {
+                group.quaternion.copy(item.quaternion);
+            }
             
             group.userData.originalPosition = group.position.clone();
             group.userData.originalScale = group.scale.clone();
@@ -376,12 +381,19 @@ export class ChristmasTree {
         this.generateTree();
         this._applyTheme(this.colorThemes[this.currentThemeIndex]);
 
-        // 加载预设挂件
-        this.ornamentManager.loadOrnaments([
-            { id: 'bell', path: 'images/ornaments/bell.png', position: [0.6, 0.2, 0.6] },
-            { id: 'gift', path: 'images/ornaments/gift.png', position: [-0.7, -0.5, 0.4] },
-            { id: 'snowflake', path: 'images/ornaments/snowflake.png', position: [0.1, 1.0, -0.5] }
-        ]);
+        // 加载动态图片配置
+        const images = [
+            'images/ornaments/1.JPG',
+            'images/ornaments/2.JPG',
+            'images/ornaments/3.JPG',
+            'images/ornaments/4.JPG',
+            'images/ornaments/5.JPG',
+            'images/ornaments/6.JPG',
+            'images/ornaments/bell.png',     // 保留一些经典装饰
+            'images/ornaments/gift.png',
+            'images/ornaments/snowflake.png'
+        ];
+        this.loadOrnamentsFromImages(images);
     }
 
     generateTree() {
@@ -693,6 +705,45 @@ export class ChristmasTree {
             colors[2] = themeObj.star.b;
             this.starPoint.geometry.attributes.color.needsUpdate = true;
         }
+    }
+
+    /**
+     * 根据图片列表自动加载并布局挂件
+     * @param {Array<string>} imagePaths 图片路径列表
+     */
+    loadOrnamentsFromImages(imagePaths) {
+        const count = imagePaths.length;
+        const positions = this.calculateOrnamentPositions(count);
+        
+        const config = [];
+        for (let i = 0; i < count; i++) {
+            const pos = positions[i];
+            
+            // 计算朝向：lookAt normal
+            // 我们需要反算出该点的角度 angle
+            // x = r * cos(a), z = r * sin(a) => a = atan2(z, x)
+            const angle = Math.atan2(pos.z, pos.x);
+            const normal = this.getSurfaceNormal(angle);
+            
+            // 计算 Quaternion
+            // 默认相框是面向 +Z 的 (PlaneGeometry)，我们需要它面向 Normal
+            // 创建一个 dummy object 来辅助计算
+            const dummy = new THREE.Object3D();
+            dummy.position.copy(pos);
+            dummy.lookAt(pos.clone().add(normal)); 
+            
+            // 注意：因为 Plane 默认面朝 +Z，lookAt 会让 +Z 指向目标
+            // 我们的 Normal 是指向树外的，所以正好
+
+            config.push({
+                id: `photo-${i}`,
+                path: imagePaths[i],
+                position: [pos.x, pos.y, pos.z],
+                quaternion: dummy.quaternion.clone()
+            });
+        }
+        
+        this.ornamentManager.loadOrnaments(config);
     }
 
     /**
