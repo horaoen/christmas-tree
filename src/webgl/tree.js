@@ -694,4 +694,25 @@ export class ChristmasTree {
             this.starPoint.geometry.attributes.color.needsUpdate = true;
         }
     }
+
+    /**
+     * 计算树表面的 3D 坐标
+     * @param {number} hRatio 高度百分比 (0.0 - 1.0, 0 为底部)
+     * @param {number} angle 绕树角度 (弧度)
+     * @returns {THREE.Vector3}
+     */
+    getSurfacePoint(hRatio, angle) {
+        // y: range [-treeHeight/2, treeHeight/2]
+        const y = (hRatio - 0.5) * this.treeHeight;
+        
+        // Radius decreases linearly with height
+        // At bottom (hRatio=0), radius = baseRadius
+        // At top (hRatio=1), radius = 0
+        const radius = this.baseRadius * (1.0 - hRatio);
+
+        const x = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+
+        return new THREE.Vector3(x, y, z);
+    }
 }

@@ -84,7 +84,6 @@ describe('OrnamentManager', () => {
         // children[1]: matteMesh (Plane)
         // children[2]: photoMesh (Plane)
         const frameMesh = group.children[0];
-        const matteMesh = group.children[1];
         const photoMesh = group.children[2];
 
         // 验证 PhotoMesh 比例 (3:4)
@@ -96,6 +95,33 @@ describe('OrnamentManager', () => {
         // Expected: width=0.21, height=0.26
         expect(frameMesh.geometry.parameters.width).toBeCloseTo(0.21);
         expect(frameMesh.geometry.parameters.height).toBeCloseTo(0.26);
+    });
+
+    it('should calculate correct surface coordinates', () => {
+        // Mock tree parameters: height=3, baseRadius=1.2
+        const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
+        
+        // Test base (h=0)
+        // At h=0 (bottom of foliage area, technically treeHeight/2 is top, -treeHeight/2 is bottom)
+        // Normalized h=0 -> y = -1.5, radius = 1.2
+        const p1 = tree.getSurfacePoint(0.0, 0); // h=0%, angle=0
+        expect(p1.y).toBeCloseTo(-1.5);
+        expect(p1.x).toBeCloseTo(1.2);
+        expect(p1.z).toBeCloseTo(0);
+
+        // Test top (h=1)
+        // At h=1, y = 1.5, radius = 0
+        const p2 = tree.getSurfacePoint(1.0, 0);
+        expect(p2.y).toBeCloseTo(1.5);
+        expect(p2.x).toBeCloseTo(0);
+
+        // Test middle (h=0.5, angle=90 deg)
+        // At h=0.5, y=0, radius=0.6
+        // Angle PI/2 -> x=0, z=0.6
+        const p3 = tree.getSurfacePoint(0.5, Math.PI / 2);
+        expect(p3.y).toBeCloseTo(0);
+        expect(p3.x).toBeCloseTo(0);
+        expect(p3.z).toBeCloseTo(0.6);
     });
 
     it('should handle selecting an ornament', () => {
