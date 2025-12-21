@@ -8,7 +8,7 @@
 - [x] Task: 更新 `OrnamentManager.loadOrnaments` 方法，支持更灵活的配置结构 [b41877e]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: 基础重构与 3:4 相框实现' (Protocol in workflow.md)
 
-## Phase 2: 智能分布算法开发
+## Phase 2: 智能分布算法开发 [checkpoint: b7d11e2]
 - [x] Task: 实现树表面坐标转换函数（基于高度 and 角度计算 3D 空间坐标） [93df735]
 - [x] Task: 开发基于随机排斥（Random Poisson-like）的分布算法，自动计算照片挂载点并避免重叠 [42af4ec]
 - [x] Task: 实现相框自动朝向算法（使相框法线指向树干外部） [eac533a]
