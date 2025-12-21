@@ -730,25 +730,21 @@ export class ChristmasTree {
             const pos = positions[i];
             
             // 计算朝向：lookAt normal
-            // 我们需要反算出该点的角度 angle
-            // x = r * cos(a), z = r * sin(a) => a = atan2(z, x)
             const angle = Math.atan2(pos.z, pos.x);
             const normal = this.getSurfaceNormal(angle);
             
+            // 增加微小偏移，防止与树叶粒子穿模
+            const offsetPos = pos.clone().add(normal.clone().multiplyScalar(0.05));
+
             // 计算 Quaternion
-            // 默认相框是面向 +Z 的 (PlaneGeometry)，我们需要它面向 Normal
-            // 创建一个 dummy object 来辅助计算
             const dummy = new THREE.Object3D();
-            dummy.position.copy(pos);
-            dummy.lookAt(pos.clone().add(normal)); 
-            
-            // 注意：因为 Plane 默认面朝 +Z，lookAt 会让 +Z 指向目标
-            // 我们的 Normal 是指向树外的，所以正好
+            dummy.position.copy(offsetPos);
+            dummy.lookAt(offsetPos.clone().add(normal)); 
 
             config.push({
                 id: `photo-${i}`,
                 path: imagePaths[i],
-                position: [pos.x, pos.y, pos.z],
+                position: [offsetPos.x, offsetPos.y, offsetPos.z],
                 quaternion: dummy.quaternion.clone()
             });
         }
