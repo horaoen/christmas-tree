@@ -300,10 +300,9 @@ export class OrnamentManager {
             const photoMesh = ornament.children[2];
             if (photoMesh && photoMesh.material) {
                 if (isSelected) {
-                    // 选中：全亮 (自发光)
-                    // 使用 hex 数值避免创建过多 Color 对象
-                    photoMesh.material.emissive.setHex(0xffffff);
-                    photoMesh.material.emissiveIntensity = 0.8; 
+                    // 选中：微弱补光 (避免 Bloom 过曝)
+                    photoMesh.material.emissive.setHex(0x333333);
+                    photoMesh.material.emissiveIntensity = 0.2; 
                 } else {
                     // 非选中：无自发光 (完全受环境光控制)
                     photoMesh.material.emissive.setHex(0x000000);
