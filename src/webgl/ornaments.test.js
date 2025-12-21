@@ -141,6 +141,31 @@ describe('OrnamentManager', () => {
         });
     });
 
+    it('should calculate correct surface normal', () => {
+        // Tree: height=3, radius=1.2
+        // Slope angle theta: tan(theta) = radius / height = 1.2 / 3 = 0.4
+        // Normal vector in vertical plane: (cos(theta), sin(theta))? 
+        // Actually simpler: Vector from axis (0, y, 0) to surface (x, y, z) is horizontal.
+        // True surface normal tilts up.
+        // Slope vector (downward): (1.2, -3, 0) normalized.
+        // Normal vector (outward): (3, 1.2, 0) normalized.
+        
+        const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
+        
+        // Test angle 0 (Point on +X axis)
+        const normal1 = tree.getSurfaceNormal(0); 
+        // Should point primarily +X, slightly +Y
+        expect(normal1.x).toBeGreaterThan(0.8);
+        expect(normal1.y).toBeGreaterThan(0);
+        expect(normal1.z).toBeCloseTo(0);
+        
+        // Test angle PI/2 (Point on +Z axis)
+        const normal2 = tree.getSurfaceNormal(Math.PI / 2);
+        expect(normal2.x).toBeCloseTo(0);
+        expect(normal2.z).toBeGreaterThan(0.8);
+        expect(normal2.y).toBeGreaterThan(0);
+    });
+
     it('should handle selecting an ornament', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         manager.loadOrnaments(config);

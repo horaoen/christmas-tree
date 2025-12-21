@@ -717,6 +717,34 @@ export class ChristmasTree {
     }
 
     /**
+     * 计算树表面某角度的法线方向
+     * @param {number} angle 绕树角度
+     * @returns {THREE.Vector3}
+     */
+    getSurfaceNormal(angle) {
+        // Cone geometry:
+        // Slope vector S = (baseRadius * cos(angle), -treeHeight, baseRadius * sin(angle))
+        // Tangent vector T = (-sin(angle), 0, cos(angle))
+        // Normal N = T x S
+        // 
+        // Simplified:
+        // Horizontal component length = treeHeight
+        // Vertical component length = baseRadius
+        // Normal points OUT and UP.
+        
+        const slope = this.baseRadius / this.treeHeight;
+        // Normal vector components in radial plane (r, y) are (treeHeight, baseRadius) normalized
+        // Let's verify: Slope is dy/dr = -treeHeight/baseRadius. Normal slope is baseRadius/treeHeight.
+        
+        // Radial vector (horizontal)
+        const rx = Math.cos(angle);
+        const rz = Math.sin(angle);
+        
+        const normal = new THREE.Vector3(rx, slope, rz).normalize();
+        return normal;
+    }
+
+    /**
      * 使用 Poisson Disk Sampling (简化版) 计算不重叠的挂载点
      * @param {number} count 需要生成的点数量
      * @returns {Array<THREE.Vector3>}
