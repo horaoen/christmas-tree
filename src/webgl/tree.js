@@ -193,11 +193,11 @@ export class OrnamentManager {
 
         const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
 
-        // 4. 顶部挂环 - 适中尺寸
-        const ringGeometry = new THREE.TorusGeometry(0.03, 0.005, 8, 16);
+        // 4. 顶部挂环 - 精致尺寸
+        const ringGeometry = new THREE.TorusGeometry(0.025, 0.004, 8, 16);
         const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 });
         const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-        ringMesh.position.set(0, (photoHeight + framePadding) / 2 + 0.018, 0); 
+        ringMesh.position.set(0, (photoHeight + framePadding) / 2 + 0.015, 0); 
 
         group.add(frameMesh);
         group.add(matteMesh);
