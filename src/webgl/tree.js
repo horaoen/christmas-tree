@@ -295,6 +295,22 @@ export class OrnamentManager {
             const isSelected = ornament === this.selectedOrnament;
             const isHovered = ornament === this.hoveredOrnament;
             
+            // 获取 Photo Mesh (children[2]) 并动态调整自发光
+            // 确保被选中时照片清晰明亮，不受环境光影响
+            const photoMesh = ornament.children[2];
+            if (photoMesh && photoMesh.material) {
+                if (isSelected) {
+                    // 选中：全亮 (自发光)
+                    // 使用 hex 数值避免创建过多 Color 对象
+                    photoMesh.material.emissive.setHex(0xffffff);
+                    photoMesh.material.emissiveIntensity = 0.8; 
+                } else {
+                    // 非选中：无自发光 (完全受环境光控制)
+                    photoMesh.material.emissive.setHex(0x000000);
+                    photoMesh.material.emissiveIntensity = 0.0;
+                }
+            }
+            
             let targetScale = ornament.userData.originalScale.clone();
             let targetPos;
             let targetQuat;
