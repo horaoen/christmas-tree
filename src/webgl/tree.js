@@ -193,7 +193,7 @@ export class OrnamentManager {
         const photoMaterial = new THREE.MeshBasicMaterial({
             transparent: true,
             side: THREE.DoubleSide,
-            color: 0x666666 
+            color: 0xffffff 
         });
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
@@ -306,8 +306,8 @@ export class OrnamentManager {
                 // 目标旋转：面向摄像机
                 targetQuat = this.camera.quaternion.clone();
 
-                // 选中时稍微放大
-                targetScale.set(2.0, 2.0, 2.0); 
+                // 选中时显着放大以便观察
+                targetScale.set(3.5, 3.5, 3.5); 
 
             } else {
                 // 非选中状态：回归原位 (Local Space)
