@@ -42,6 +42,14 @@ describe('OrnamentManager', () => {
         expect(manager.ornaments.length).toBe(1);
     });
 
+    it('should handle config without position', () => {
+        const config = [{ id: 'no-pos', path: 'images/ornaments/test.png' }];
+        manager.loadOrnaments(config);
+        expect(manager.ornaments[0].position.x).toBe(0);
+        expect(manager.ornaments[0].position.y).toBe(0);
+        expect(manager.ornaments[0].position.z).toBe(0);
+    });
+
     it('should assign textures to ornaments', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         const texture = new THREE.Texture();

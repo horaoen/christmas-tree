@@ -147,79 +147,88 @@ export class OrnamentManager {
     }
 
     /**
-     * 加载预设挂件
-     * @param {Array} config 挂件配置列表
+     * 创建单个挂件对象
+     * @param {Object} item 配置项
+     * @returns {THREE.Group}
      */
-    loadOrnaments(config) {
+    createOrnament(item) {
         const photoWidth = 0.15;
         const photoHeight = 0.20;
         const mattePadding = 0.02;
         const framePadding = 0.06;
 
+        const group = new THREE.Group();
+
+        // 1. 照片层 (Photo) - 3:4 比例
+        const photoGeometry = new THREE.PlaneGeometry(photoWidth, photoHeight); 
+        const photoMaterial = new THREE.MeshBasicMaterial({
+            transparent: true,
+            side: THREE.DoubleSide,
+            color: 0x666666 
+        });
+        const photoMesh = new THREE.Mesh(photoGeometry, photoMaterial);
+        photoMesh.position.z = 0.02; 
+
+        // 2. 衬底层 (Matte - White Border) 
+        const matteGeometry = new THREE.PlaneGeometry(photoWidth + mattePadding, photoHeight + mattePadding); 
+        const matteMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 }); 
+        const matteMesh = new THREE.Mesh(matteGeometry, matteMaterial);
+        matteMesh.position.z = 0.01;
+
+        // 3. 外框层 (Outer Wood Frame)
+        const frameGeometry = new THREE.BoxGeometry(photoWidth + framePadding, photoHeight + framePadding, 0.01); 
+        const frameMaterial = new THREE.MeshStandardMaterial({
+            color: 0x654321, 
+            roughness: 0.4,
+            metalness: 0.0
+        });
+        
+        this.loader.load('images/wood_texture.jpg', (texture) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            frameMaterial.map = texture;
+            frameMaterial.needsUpdate = true;
+        });
+
+        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+
+        // 4. 顶部挂环
+        const ringGeometry = new THREE.TorusGeometry(0.02, 0.003, 8, 16);
+        const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 });
+        const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+        ringMesh.position.set(0, photoHeight/2 + 0.015, 0); // 动态计算挂环位置
+
+        group.add(frameMesh);
+        group.add(matteMesh);
+        group.add(photoMesh);
+        group.add(ringMesh);
+        
+        this.loader.load(item.path, (texture) => {
+            photoMaterial.map = texture;
+            photoMaterial.needsUpdate = true;
+        });
+
+        // 存储元数据
+        group.userData.id = item.id;
+        group.userData.path = item.path;
+        
+        return group;
+    }
+
+    /**
+     * 加载预设挂件
+     * @param {Array} config 挂件配置列表
+     */
+    loadOrnaments(config) {
         config.forEach(item => {
-            const group = new THREE.Group();
+            const group = this.createOrnament(item);
 
-            // 1. 照片层 (Photo) - 3:4 比例
-            const photoGeometry = new THREE.PlaneGeometry(photoWidth, photoHeight); 
-            // 大幅降低亮度以避免 Bloom 过曝
-            const photoMaterial = new THREE.MeshBasicMaterial({
-                transparent: true,
-                side: THREE.DoubleSide,
-                color: 0x666666 // 进一步调暗
-            });
-            const photoMesh = new THREE.Mesh(photoGeometry, photoMaterial);
-            photoMesh.position.z = 0.02; 
-
-            // 2. 衬底层 (Matte - White Border) 
-            const matteGeometry = new THREE.PlaneGeometry(photoWidth + mattePadding, photoHeight + mattePadding); 
-            const matteMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 }); // 调暗衬底
-            const matteMesh = new THREE.Mesh(matteGeometry, matteMaterial);
-            matteMesh.position.z = 0.01;
-
-            // 3. 外框层 (Outer Wood Frame) - 深色胡桃木
-            const frameGeometry = new THREE.BoxGeometry(photoWidth + framePadding, photoHeight + framePadding, 0.01); 
-            const frameMaterial = new THREE.MeshStandardMaterial({
-                color: 0x654321, // Dark Walnut (深胡桃木色)
-                roughness: 0.4,  // 半光泽，看起来像上过漆的木头
-                metalness: 0.0
-            });
-            
-            // 加载并应用木纹纹理
-            this.loader.load('images/wood_texture.jpg', (texture) => {
-                texture.wrapS = THREE.RepeatWrapping;
-                texture.wrapT = THREE.RepeatWrapping;
-                texture.repeat.set(1, 1);
-                frameMaterial.map = texture;
-                frameMaterial.needsUpdate = true;
-            });
-
-            const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
-
-            // 4. 顶部挂环
-            const ringGeometry = new THREE.TorusGeometry(0.02, 0.003, 8, 16);
-            const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 });
-            const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-            ringMesh.position.set(0, 0.115, 0);
-
-            group.add(frameMesh);
-            group.add(matteMesh);
-            group.add(photoMesh);
-            group.add(ringMesh);
-            
-            // 加载照片纹理
-            this.loader.load(item.path, (texture) => {
-                photoMaterial.map = texture;
-                photoMaterial.needsUpdate = true;
-            });
-
-            // 设置位置
+            // 设置位置（如果提供）
             if (item.position) {
                 group.position.set(...item.position);
             }
             
-            // 存储元数据
-            group.userData.id = item.id;
-            group.userData.path = item.path;
             group.userData.originalPosition = group.position.clone();
             group.userData.originalScale = group.scale.clone();
             group.userData.originalQuaternion = group.quaternion.clone();
