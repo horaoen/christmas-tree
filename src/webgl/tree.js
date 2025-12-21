@@ -190,10 +190,13 @@ export class OrnamentManager {
 
         // 1. 照片层 (Photo) - 3:4 比例
         // Note: Photo material needs to be unique per instance because the texture map differs
-        const photoMaterial = new THREE.MeshBasicMaterial({
+        // Change to StandardMaterial to react to light and avoid constant bloom overexposure
+        const photoMaterial = new THREE.MeshStandardMaterial({
             transparent: true,
             side: THREE.DoubleSide,
-            color: 0x999999 // 尝试 60% 亮度平衡
+            color: 0xffffff,
+            roughness: 0.8, // Matte paper finish
+            metalness: 0.0
         });
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
