@@ -2,7 +2,7 @@
 
 本计划旨在实现圣诞树上的动态人像相册系统，包括 3:4 比例相框的重构和基于算法的自动分布。
 
-## Phase 1: 基础重构与 3:4 相框实现
+## Phase 1: 基础重构与 3:4 相框实现 [checkpoint: b4096a8]
 - [x] Task: 重构 `OrnamentManager` 以支持动态比例的相框几何体（从 1:1 改为 3:4） [32cfeb7]
 - [x] Task: 编写测试验证相框比例和材质加载的正确性 [61b079d]
 - [x] Task: 更新 `OrnamentManager.loadOrnaments` 方法，支持更灵活的配置结构 [b41877e]
