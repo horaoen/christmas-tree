@@ -125,6 +125,38 @@ export class OrnamentManager {
         this.loader = new THREE.TextureLoader();
         this.selectedOrnament = null;
         this.hoveredOrnament = null;
+
+        // --- Shared Resources for Performance ---
+        const photoWidth = 0.15;
+        const photoHeight = 0.20;
+        const mattePadding = 0.02;
+        const framePadding = 0.06;
+
+        this.sharedGeometry = {
+            photo: new THREE.PlaneGeometry(photoWidth, photoHeight),
+            matte: new THREE.PlaneGeometry(photoWidth + mattePadding, photoHeight + mattePadding),
+            frame: new THREE.BoxGeometry(photoWidth + framePadding, photoHeight + framePadding, 0.01),
+            ring: new THREE.TorusGeometry(0.025, 0.004, 8, 16)
+        };
+
+        this.sharedMaterial = {
+            matte: new THREE.MeshBasicMaterial({ color: 0x555555 }),
+            frame: new THREE.MeshStandardMaterial({
+                color: 0x654321, 
+                roughness: 0.4,
+                metalness: 0.0
+            }),
+            ring: new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 })
+        };
+
+        // Preload wood texture for frame
+        this.loader.load('images/wood_texture.jpg', (texture) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            this.sharedMaterial.frame.map = texture;
+            this.sharedMaterial.frame.needsUpdate = true;
+        });
     }
 
     /**
@@ -152,51 +184,29 @@ export class OrnamentManager {
      * @returns {THREE.Group}
      */
     createOrnament(item) {
-        const photoWidth = 0.15;
-        const photoHeight = 0.20;
-        const mattePadding = 0.02;
+        const group = new THREE.Group();
+        const photoHeight = 0.20; // Need this for ring positioning
         const framePadding = 0.06;
 
-        const group = new THREE.Group();
-
         // 1. 照片层 (Photo) - 3:4 比例
-        const photoGeometry = new THREE.PlaneGeometry(photoWidth, photoHeight); 
+        // Note: Photo material needs to be unique per instance because the texture map differs
         const photoMaterial = new THREE.MeshBasicMaterial({
             transparent: true,
             side: THREE.DoubleSide,
             color: 0x666666 
         });
-        const photoMesh = new THREE.Mesh(photoGeometry, photoMaterial);
+        const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
 
-        // 2. 衬底层 (Matte - White Border) 
-        const matteGeometry = new THREE.PlaneGeometry(photoWidth + mattePadding, photoHeight + mattePadding); 
-        const matteMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 }); 
-        const matteMesh = new THREE.Mesh(matteGeometry, matteMaterial);
+        // 2. 衬底层
+        const matteMesh = new THREE.Mesh(this.sharedGeometry.matte, this.sharedMaterial.matte);
         matteMesh.position.z = 0.01;
 
-        // 3. 外框层 (Outer Wood Frame)
-        const frameGeometry = new THREE.BoxGeometry(photoWidth + framePadding, photoHeight + framePadding, 0.01); 
-        const frameMaterial = new THREE.MeshStandardMaterial({
-            color: 0x654321, 
-            roughness: 0.4,
-            metalness: 0.0
-        });
-        
-        this.loader.load('images/wood_texture.jpg', (texture) => {
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(1, 1);
-            frameMaterial.map = texture;
-            frameMaterial.needsUpdate = true;
-        });
+        // 3. 外框层
+        const frameMesh = new THREE.Mesh(this.sharedGeometry.frame, this.sharedMaterial.frame);
 
-        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
-
-        // 4. 顶部挂环 - 精致尺寸
-        const ringGeometry = new THREE.TorusGeometry(0.025, 0.004, 8, 16);
-        const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 });
-        const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+        // 4. 顶部挂环
+        const ringMesh = new THREE.Mesh(this.sharedGeometry.ring, this.sharedMaterial.ring);
         ringMesh.position.set(0, (photoHeight + framePadding) / 2 + 0.015, 0); 
 
         group.add(frameMesh);

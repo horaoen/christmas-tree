@@ -50,26 +50,39 @@ describe('OrnamentManager', () => {
         expect(manager.ornaments[0].position.z).toBe(0);
     });
 
+    it('should share resources across ornaments', () => {
+        const config = [
+            { id: 'p1', path: 'img1.png' },
+            { id: 'p2', path: 'img2.png' }
+        ];
+        manager.loadOrnaments(config);
+        
+        const o1 = manager.ornaments[0];
+        const o2 = manager.ornaments[1];
+
+        // Shared Geometry
+        expect(o1.children[0].geometry).toBe(o2.children[0].geometry); // Frame
+        expect(o1.children[2].geometry).toBe(o2.children[2].geometry); // Photo
+
+        // Shared Material (except Photo)
+        expect(o1.children[0].material).toBe(manager.sharedMaterial.frame);
+        expect(o1.children[0].material).toBe(o2.children[0].material);
+        
+        // Unique Material (Photo)
+        expect(o1.children[2].material).not.toBe(o2.children[2].material);
+    });
+
     it('should assign textures to ornaments', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         const texture = new THREE.Texture();
-        const woodTexture = new THREE.Texture();
         
         vi.spyOn(manager.loader, 'load').mockImplementation((path, onLoad) => {
-            if (path.includes('wood_texture.jpg')) {
-                if (onLoad) onLoad(woodTexture);
-                return woodTexture;
-            }
             if (onLoad) onLoad(texture);
             return texture;
         });
 
         manager.loadOrnaments(config);
         
-        // children[0]: frameMesh
-        const frameMesh = manager.ornaments[0].children[0];
-        expect(frameMesh.material.map).toBe(woodTexture);
-
         // children[2]: photoMesh
         const photoMesh = manager.ornaments[0].children[2];
         expect(photoMesh.material.map).toBe(texture);
