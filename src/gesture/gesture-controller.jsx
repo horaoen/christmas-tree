@@ -8,11 +8,11 @@ export class GestureController {
             fist: 0,
             victory: 0
         };
-        this.lastPoseTimestamp = 0; 
-        
+        this.lastPoseTimestamp = 0;
+
         // Stabilizer: Track how long a pose has been held
         this.poseHistory = { pose: null, startTime: 0 };
-        
+
         this.listeners = {};
     }
 
@@ -61,7 +61,7 @@ export class GestureController {
                     if (duration > 200) { // Threshold: 200ms
                         // Valid Stable Pose
                         activePose = detectedPose;
-                        
+
                         // Trigger Event (if cooldown allows)
                         if (now - (this.lastGestureTime[detectedPose] || 0) > this.gestureCooldown) {
                             this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
@@ -130,8 +130,8 @@ export class GestureController {
             // 4. Mapping with Deadzone
             // We want "1" and "2" to NOT trigger zoom, so we set threshold above ~5.5
             // Threshold 5.8 ensures only 3+ fingers extended triggers zoom.
-            const zoomThreshold = 5.8; 
-            
+            const zoomThreshold = 5.8;
+
             // Normalize inputs above threshold
             // Input 5.8 -> 0.0
             // Input 9.0 -> ~3.2

@@ -13,6 +13,9 @@ app.appendChild(threeCanvas);
 // Setup Scene
 const { scene, camera, renderer, christmasTree, snowSystem } = setupScene(threeCanvas);
 
+// Expose for debugging/validation via MCP
+window.__DEBUG__ = { THREE, scene, camera, renderer, christmasTree, snowSystem };
+
 // Raycaster for interactions
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
