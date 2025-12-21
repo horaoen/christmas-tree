@@ -11,7 +11,7 @@
 ## Phase 2: 智能分布算法开发
 - [x] Task: 实现树表面坐标转换函数（基于高度 and 角度计算 3D 空间坐标） [93df735]
 - [x] Task: 开发基于随机排斥（Random Poisson-like）的分布算法，自动计算照片挂载点并避免重叠 [42af4ec]
-- [ ] Task: 实现相框自动朝向算法（使相框法线指向树干外部）
+- [x] Task: 实现相框自动朝向算法（使相框法线指向树干外部） [eac533a]
 - [ ] Task: 编写单元测试验证分布点的有效性（确保在树体表面范围内且不穿模）
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: 智能分布算法开发' (Protocol in workflow.md)
 
