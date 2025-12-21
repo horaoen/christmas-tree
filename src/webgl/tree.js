@@ -151,11 +151,16 @@ export class OrnamentManager {
      * @param {Array} config 挂件配置列表
      */
     loadOrnaments(config) {
+        const photoWidth = 0.15;
+        const photoHeight = 0.20;
+        const mattePadding = 0.02;
+        const framePadding = 0.06;
+
         config.forEach(item => {
             const group = new THREE.Group();
 
-            // 1. 照片层 (Photo)
-            const photoGeometry = new THREE.PlaneGeometry(0.16, 0.16); 
+            // 1. 照片层 (Photo) - 3:4 比例
+            const photoGeometry = new THREE.PlaneGeometry(photoWidth, photoHeight); 
             // 大幅降低亮度以避免 Bloom 过曝
             const photoMaterial = new THREE.MeshBasicMaterial({
                 transparent: true,
@@ -166,13 +171,13 @@ export class OrnamentManager {
             photoMesh.position.z = 0.02; 
 
             // 2. 衬底层 (Matte - White Border) 
-            const matteGeometry = new THREE.PlaneGeometry(0.18, 0.18); // 略微增大以确保边框清晰
+            const matteGeometry = new THREE.PlaneGeometry(photoWidth + mattePadding, photoHeight + mattePadding); 
             const matteMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 }); // 调暗衬底
             const matteMesh = new THREE.Mesh(matteGeometry, matteMaterial);
             matteMesh.position.z = 0.01;
 
             // 3. 外框层 (Outer Wood Frame) - 深色胡桃木
-            const frameGeometry = new THREE.BoxGeometry(0.22, 0.22, 0.01); 
+            const frameGeometry = new THREE.BoxGeometry(photoWidth + framePadding, photoHeight + framePadding, 0.01); 
             const frameMaterial = new THREE.MeshStandardMaterial({
                 color: 0x654321, // Dark Walnut (深胡桃木色)
                 roughness: 0.4,  // 半光泽，看起来像上过漆的木头

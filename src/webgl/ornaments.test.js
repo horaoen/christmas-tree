@@ -59,6 +59,29 @@ describe('OrnamentManager', () => {
         expect(photoMesh.material.map).toBe(texture);
     });
 
+    it('should have 3:4 aspect ratio for photo and frame', () => {
+        const config = [{ id: 'portrait', path: 'images/ornaments/test.png' }];
+        manager.loadOrnaments(config);
+        const group = manager.ornaments[0];
+        
+        // children[0]: frameMesh (Box)
+        // children[1]: matteMesh (Plane)
+        // children[2]: photoMesh (Plane)
+        const frameMesh = group.children[0];
+        const matteMesh = group.children[1];
+        const photoMesh = group.children[2];
+
+        // 验证 PhotoMesh 比例 (3:4)
+        // Expected: width=0.15, height=0.20
+        expect(photoMesh.geometry.parameters.width).toBeCloseTo(0.15);
+        expect(photoMesh.geometry.parameters.height).toBeCloseTo(0.20);
+
+        // 验证 FrameMesh 比例
+        // Expected: width=0.21, height=0.26
+        expect(frameMesh.geometry.parameters.width).toBeCloseTo(0.21);
+        expect(frameMesh.geometry.parameters.height).toBeCloseTo(0.26);
+    });
+
     it('should handle selecting an ornament', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         manager.loadOrnaments(config);
