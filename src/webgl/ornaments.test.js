@@ -45,15 +45,23 @@ describe('OrnamentManager', () => {
     it('should assign textures to ornaments', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         const texture = new THREE.Texture();
+        const woodTexture = new THREE.Texture();
+        
         vi.spyOn(manager.loader, 'load').mockImplementation((path, onLoad) => {
+            if (path.includes('wood_texture.jpg')) {
+                if (onLoad) onLoad(woodTexture);
+                return woodTexture;
+            }
             if (onLoad) onLoad(texture);
             return texture;
         });
 
         manager.loadOrnaments(config);
-        // ornaments[0] 是 Group
+        
         // children[0]: frameMesh
-        // children[1]: matteMesh
+        const frameMesh = manager.ornaments[0].children[0];
+        expect(frameMesh.material.map).toBe(woodTexture);
+
         // children[2]: photoMesh
         const photoMesh = manager.ornaments[0].children[2];
         expect(photoMesh.material.map).toBe(texture);
