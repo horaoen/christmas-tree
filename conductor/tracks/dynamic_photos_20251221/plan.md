@@ -22,7 +22,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: 内容扩展与集成' (Protocol in workflow.md)
 
 ## Phase 4: 视觉打磨与最终验收
-- [ ] Task: 调整相框材质细节（边缘高光、木纹适配）以增强 3D 质感
+- [x] Task: 调整相框材质细节（边缘高光、木纹适配）以增强 3D 质感 [646ea37]
 - [ ] Task: 修复极端分布下的穿模或光照过曝问题
 - [ ] Task: 执行最终性能测试和交互验证（确保手势控制依然流畅）
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: 视觉打磨与最终验收' (Protocol in workflow.md)
