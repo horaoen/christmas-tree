@@ -143,7 +143,7 @@ export class OrnamentManager {
             matte: new THREE.MeshBasicMaterial({ color: 0x555555 }),
             frame: new THREE.MeshStandardMaterial({
                 color: 0x654321, 
-                roughness: 0.4,
+                roughness: 0.2,
                 metalness: 0.0
             }),
             ring: new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.6, roughness: 0.6 })
@@ -153,8 +153,10 @@ export class OrnamentManager {
         this.loader.load('images/wood_texture.jpg', (texture) => {
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(1, 1);
+            texture.repeat.set(2, 2);
             this.sharedMaterial.frame.map = texture;
+            this.sharedMaterial.frame.bumpMap = texture;
+            this.sharedMaterial.frame.bumpScale = 0.005;
             this.sharedMaterial.frame.needsUpdate = true;
         });
     }
