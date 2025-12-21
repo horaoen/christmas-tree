@@ -124,6 +124,23 @@ describe('OrnamentManager', () => {
         expect(p3.z).toBeCloseTo(0.6);
     });
 
+    it('should calculate non-overlapping positions for multiple ornaments', () => {
+        const tree = new ChristmasTree(mockScene, mockCamera);
+        const count = 10;
+        const positions = tree.calculateOrnamentPositions(count);
+        
+        expect(positions.length).toBe(count);
+        
+        // Check for duplicates and basic validity
+        positions.forEach((pos, index) => {
+            expect(pos).toBeInstanceOf(THREE.Vector3);
+            // Ensure no exact duplicates
+            for (let i = index + 1; i < count; i++) {
+                expect(pos.equals(positions[i])).toBe(false);
+            }
+        });
+    });
+
     it('should handle selecting an ornament', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         manager.loadOrnaments(config);

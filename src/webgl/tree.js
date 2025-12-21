@@ -715,4 +715,56 @@ export class ChristmasTree {
 
         return new THREE.Vector3(x, y, z);
     }
+
+    /**
+     * 使用 Poisson Disk Sampling (简化版) 计算不重叠的挂载点
+     * @param {number} count 需要生成的点数量
+     * @returns {Array<THREE.Vector3>}
+     */
+    calculateOrnamentPositions(count) {
+        const positions = [];
+        const minDistance = 0.5; // 最小间距，防止重叠
+        const maxAttempts = 100; // 每个点的最大尝试次数
+
+        for (let i = 0; i < count; i++) {
+            let bestCandidate = null;
+            let found = false;
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                // 随机生成候选点
+                // 高度范围：避免最底部和最顶部 (0.1 - 0.9)
+                const hRatio = 0.1 + Math.random() * 0.8;
+                const angle = Math.random() * Math.PI * 2;
+                
+                const candidate = this.getSurfacePoint(hRatio, angle);
+
+                // 检查与现有点的距离
+                let tooClose = false;
+                for (const pos of positions) {
+                    if (candidate.distanceTo(pos) < minDistance) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+
+                if (!tooClose) {
+                    bestCandidate = candidate;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                positions.push(bestCandidate);
+            } else {
+                console.warn(`Could not find a non-overlapping position for ornament ${i + 1}`);
+                // Fallback: 强制添加一个点，可能会重叠，但比没有好
+                // 或者我们可以选择跳过
+                 const hRatio = 0.1 + Math.random() * 0.8;
+                 const angle = Math.random() * Math.PI * 2;
+                 positions.push(this.getSurfacePoint(hRatio, angle));
+            }
+        }
+        return positions;
+    }
 }
