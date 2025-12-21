@@ -230,13 +230,9 @@ describe('OrnamentManager', () => {
         expect(tree.ornamentManager.ornaments[0].userData.id).toBe('photo-0');
         expect(tree.ornamentManager.ornaments[0].userData.path).toBe('img1.jpg');
         
-        // Check position assignment
-        expect(tree.ornamentManager.ornaments[0].position).toEqual(mockPositions[0]);
-        
-        // Check orientation (lookAt normal)
-        // We can't easily check lookAt directly without mocking Object3D, 
-        // but we can check if it called getSurfaceNormal?
-        // Let's assume implementation correctness if position is set.
+        // Check position assignment (should have 0.05 offset from mockPositions)
+        const pos0 = tree.ornamentManager.ornaments[0].position;
+        expect(pos0.distanceTo(mockPositions[0])).toBeCloseTo(0.05, 2);
     });
 
     it('should handle selecting an ornament', () => {
