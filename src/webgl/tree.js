@@ -198,7 +198,9 @@ export class OrnamentManager {
             side: THREE.DoubleSide,
             color: 0xffffff,
             roughness: 0.8, // Matte paper finish
-            metalness: 0.0
+            metalness: 0.0,
+            emissive: 0x222222, // Base glow to prevent being too dark
+            emissiveIntensity: 0.5
         });
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
@@ -302,13 +304,13 @@ export class OrnamentManager {
             const photoMesh = ornament.children[2];
             if (photoMesh && photoMesh.material) {
                 if (isSelected) {
-                    // 选中：微弱补光 (避免 Bloom 过曝)
-                    photoMesh.material.emissive.setHex(0x333333);
-                    photoMesh.material.emissiveIntensity = 0.2; 
+                    // 选中：显著补光
+                    photoMesh.material.emissive.setHex(0x444444);
+                    photoMesh.material.emissiveIntensity = 0.8; 
                 } else {
-                    // 非选中：无自发光 (完全受环境光控制)
-                    photoMesh.material.emissive.setHex(0x000000);
-                    photoMesh.material.emissiveIntensity = 0.0;
+                    // 非选中：保持基础可见性
+                    photoMesh.material.emissive.setHex(0x222222);
+                    photoMesh.material.emissiveIntensity = 0.5;
                 }
             }
             
