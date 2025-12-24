@@ -4,7 +4,7 @@ export class GestureController {
         this.smoothedPinchDistance = null;
 
         this.gestureCooldown = 500; // milliseconds
-        this.navigationCooldown = 300; // Faster for scrolling
+        this.navigationCooldown = 800; // Slower for discrete switching
         this.lastGestureTime = {
             fist: 0,
             victory: 0,
@@ -12,10 +12,6 @@ export class GestureController {
             photo_prev: 0
         };
         this.lastPoseTimestamp = 0;
-
-        // Navigation state
-        this.navigationStartY = null;
-        this.navigationThreshold = 0.1; // 10% of screen height
 
         // Stabilizer: Track how long a pose has been held
         this.poseHistory = { pose: null, startTime: 0 };
@@ -48,15 +44,17 @@ export class GestureController {
         }
 
         const landmarks = results.multiHandLandmarks;
+        const handednesses = results.multiHandedness || [];
         let rotationDelta = 0;
         let scaleFactor = null;
         let activePose = null;
 
         const now = performance.now(); // Get current time for debouncing
 
-        for (const handLandmarks of landmarks) {
-            // Detect pose for each hand
+        for (let i = 0; i < landmarks.length; i++) {
+            const handLandmarks = landmarks[i];
             const detectedPose = this.detectPose(handLandmarks);
+            const handInfo = handednesses[i];
 
             // Stability Check (Debounce)
             // A pose must be held for 200ms to be valid. 
@@ -69,8 +67,24 @@ export class GestureController {
                         // Valid Stable Pose
                         activePose = detectedPose;
 
+                        // 0. Navigation Logic (L-Shape Handedness)
+                        // Left Hand -> photo_next
+                        // Right Hand -> photo_prev
+                        if (activePose === 'l_shape' && handInfo) {
+                            const label = handInfo.label; // "Left" or "Right"
+                            let navGesture = null;
+                            if (label === 'Left') navGesture = 'photo_next';
+                            if (label === 'Right') navGesture = 'photo_prev';
+
+                            if (navGesture && now - (this.lastGestureTime[navGesture] || 0) > this.navigationCooldown) {
+                                this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: navGesture } }));
+                                this.lastGestureTime[navGesture] = now;
+                            }
+                        }
+
                         // Trigger Event (if cooldown allows)
-                        if (now - (this.lastGestureTime[detectedPose] || 0) > this.gestureCooldown) {
+                        // Only standard gestures if not l_shape (or we can allow both, but l_shape is nav mode)
+                        if (activePose !== 'l_shape' && now - (this.lastGestureTime[detectedPose] || 0) > this.gestureCooldown) {
                             this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: detectedPose } }));
                             this.lastGestureTime[detectedPose] = now;
                             this.lastPoseTimestamp = now;
@@ -96,32 +110,6 @@ export class GestureController {
             totalX += hand[9].x;
         }
         const avgX = totalX / landmarks.length;
-        let avgY = 0;
-        for (const hand of landmarks) {
-            avgY += hand[9].y;
-        }
-        avgY /= landmarks.length;
-
-        // 0. Navigation Logic (L-Shape vertical swipe)
-        if (activePose === 'l_shape') {
-            if (this.navigationStartY === null) {
-                this.navigationStartY = avgY;
-            } else {
-                const deltaY = avgY - this.navigationStartY;
-                if (Math.abs(deltaY) > this.navigationThreshold) {
-                    const navGesture = deltaY > 0 ? 'photo_next' : 'photo_prev';
-                    
-                    if (now - (this.lastGestureTime[navGesture] || 0) > this.navigationCooldown) {
-                        this.dispatchEvent(new CustomEvent('gesture', { detail: { pose: navGesture } }));
-                        this.lastGestureTime[navGesture] = now;
-                        // Reset origin to current Y to allow continuous scrolling
-                        this.navigationStartY = avgY;
-                    }
-                }
-            }
-        } else {
-            this.navigationStartY = null;
-        }
 
         if (this.lastHandX !== null) {
             const deltaX = avgX - this.lastHandX;

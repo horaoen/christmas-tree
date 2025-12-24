@@ -111,52 +111,87 @@ describe('GestureController', () => {
         expect(pose).toBe('l_shape');
     });
 
-    it('should trigger photo_next/prev events when l_shape moves vertically', () => {
+    it('should trigger photo_next with Left hand L-shape and photo_prev with Right hand', () => {
         const callback = vi.fn();
         controller.addEventListener('gesture', callback);
-
-        const getLShape = (y) => {
-            const landmarks = Array(21).fill({ x: 0.5, y: y }); // Wrist at y
-            const setFinger = (tip, pip, mcp, isExtended) => {
-                const mcpY = y - 0.2;
-                if (isExtended) {
-                    landmarks[tip] = { x: 0.5, y: y - 0.8 };
-                    landmarks[pip] = { x: 0.5, y: y - 0.5 };
-                    landmarks[mcp] = { x: 0.5, y: mcpY };
-                } else {
-                    landmarks[tip] = { x: 0.5, y: y - 0.1 };
-                    landmarks[pip] = { x: 0.5, y: y - 0.15 };
-                    landmarks[mcp] = { x: 0.5, y: mcpY };
-                }
-            };
-            setFinger(8, 7, 6, true);  // Index
-            setFinger(4, 3, 2, true);  // Thumb
-            setFinger(12, 11, 10, false);
-            setFinger(16, 15, 14, false);
-            setFinger(20, 19, 18, false);
-            return landmarks;
-        };
-
-        // 1. Initial Position (y=0.5)
-        // We need to hold the pose for >200ms for stability
         vi.useFakeTimers();
-        
-        controller.process({ multiHandLandmarks: [getLShape(0.5)] });
-        vi.advanceTimersByTime(400); // Pass stability threshold AND navigation cooldown
-        controller.process({ multiHandLandmarks: [getLShape(0.5)] });
 
-        // 2. Move Down (y=0.7) -> Should trigger photo_next
-        controller.process({ multiHandLandmarks: [getLShape(0.7)] });
+        const landmarks = Array(21).fill({ x: 0, y: 0 });
+        // Set L-shape
+        const setLShape = () => {
+             // Index & Thumb Extended
+             landmarks[8] = { x: 0, y: -0.8 }; 
+             landmarks[7] = { x: 0, y: -0.5 };
+             landmarks[6] = { x: 0, y: -0.2 }; 
+             landmarks[4] = { x: 0, y: -0.8 }; 
+             landmarks[3] = { x: 0, y: -0.5 };
+             landmarks[2] = { x: 0, y: -0.2 };
+             // Others curled
+             landmarks[12] = { x: 0, y: -0.1 };
+             landmarks[11] = { x: 0, y: -0.15 };
+             landmarks[10] = { x: 0, y: -0.2 };
+             landmarks[16] = { x: 0, y: -0.1 };
+             landmarks[15] = { x: 0, y: -0.15 };
+             landmarks[14] = { x: 0, y: -0.2 };
+             landmarks[20] = { x: 0, y: -0.1 };
+             landmarks[19] = { x: 0, y: -0.15 };
+             landmarks[18] = { x: 0, y: -0.2 };
+        };
+        setLShape();
+
+        // Warm up timer
+        vi.advanceTimersByTime(1000);
+
+        // 1. Left Hand -> Should trigger photo_next
+        controller.process({ 
+            multiHandLandmarks: [landmarks],
+            multiHandedness: [{ label: 'Left' }]
+        });
         
+        // Advance time for stability check (200ms)
+        vi.advanceTimersByTime(250);
+        
+        // Process again to trigger
+        controller.process({ 
+            multiHandLandmarks: [landmarks],
+            multiHandedness: [{ label: 'Left' }]
+        });
+
         expect(callback).toHaveBeenCalledWith(expect.objectContaining({
             detail: { pose: 'photo_next' }
         }));
-
+        
         callback.mockClear();
 
-        // 3. Move Up (y=0.3) -> Should trigger photo_prev
-        // Note: we might need to reset origin or check how implementation handles continuous movement
-        controller.process({ multiHandLandmarks: [getLShape(0.3)] });
+        // 2. Cooldown check (Navigation cooldown is likely higher now, e.g. 500-1000ms)
+        // Let's advance enough to clear cooldown
+        vi.advanceTimersByTime(1000);
+
+        // 3. Right Hand -> Should trigger photo_prev
+        controller.process({ 
+            multiHandLandmarks: [landmarks],
+            multiHandedness: [{ label: 'Right' }]
+        });
+        
+        // Need to stabilize new pose (even if same geometry, handedness changed implies new hand/pose context? 
+        // Or controller might treat it as same pose if we don't reset. 
+        // Let's assume we need to stabilize again or the hand swap is instant.)
+        // Ideally, in real world, one hand leaves, another enters. 
+        // Let's simulate "no hands" frame first to be clean.
+        
+        controller.process({ multiHandLandmarks: [] }); 
+        vi.advanceTimersByTime(100);
+
+        controller.process({ 
+            multiHandLandmarks: [landmarks],
+            multiHandedness: [{ label: 'Right' }]
+        });
+        vi.advanceTimersByTime(250);
+        controller.process({ 
+            multiHandLandmarks: [landmarks],
+            multiHandedness: [{ label: 'Right' }]
+        });
+
         expect(callback).toHaveBeenCalledWith(expect.objectContaining({
             detail: { pose: 'photo_prev' }
         }));
