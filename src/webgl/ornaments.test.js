@@ -115,8 +115,8 @@ describe('OrnamentManager', () => {
         manager.loadOrnaments(config);
         const photoMesh = manager.ornaments[0].children[2];
         
-        expect(photoMesh.material.emissiveIntensity).toBe(0.4);
-        expect(photoMesh.material.emissive.getHex()).toBe(0xffffff);
+        expect(photoMesh.material.emissiveIntensity).toBe(0.2);
+        expect(photoMesh.material.emissive.getHex()).toBe(0x444444);
     });
 
     it('should calculate correct surface coordinates', () => {
