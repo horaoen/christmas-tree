@@ -33,26 +33,18 @@ describe('GestureController', () => {
     });
 
     it('should detect "one_finger" pose', () => {
-        // Mock landmarks for "one finger" (Index UP, others DOWN)
-        // Simple Y-check: Smaller Y is "higher" on screen usually (top-left origin).
-        // _isFingerCurled uses: tip.y > pip.y (meaning tip is lower than pip -> curled down)
-        
-        // Wrist at 0,0
-        // Index: Tip(0, -10), PIP(0, -5), MCP(0, 0) -> Extended (Tip < PIP)
-        // Middle: Tip(0, 10), PIP(0, 5), MCP(0, 0) -> Curled (Tip > PIP)
-        
         const landmarks = Array(21).fill({ x: 0, y: 0 }); // Default
         
         // Helper to set finger
         const setFinger = (tip, pip, mcp, isExtended) => {
             if (isExtended) {
-                landmarks[tip] = { x: 0, y: -0.5 }; // Up
-                landmarks[pip] = { x: 0, y: -0.3 };
-                landmarks[mcp] = { x: 0, y: 0 };
+                landmarks[tip] = { x: 0, y: -0.8 }; 
+                landmarks[pip] = { x: 0, y: -0.5 };
+                landmarks[mcp] = { x: 0, y: -0.2 }; 
             } else {
-                landmarks[tip] = { x: 0, y: 0.5 }; // Down
-                landmarks[pip] = { x: 0, y: 0.3 };
-                landmarks[mcp] = { x: 0, y: 0 };
+                landmarks[tip] = { x: 0, y: -0.1 }; 
+                landmarks[pip] = { x: 0, y: -0.15 };
+                landmarks[mcp] = { x: 0, y: -0.2 }; 
             }
         };
 
@@ -72,13 +64,13 @@ describe('GestureController', () => {
 
         const setFinger = (tip, pip, mcp, isExtended) => {
             if (isExtended) {
-                landmarks[tip] = { x: 0, y: -0.5 };
-                landmarks[pip] = { x: 0, y: -0.3 };
-                landmarks[mcp] = { x: 0, y: 0 };
+                landmarks[tip] = { x: 0, y: -0.8 }; 
+                landmarks[pip] = { x: 0, y: -0.5 };
+                landmarks[mcp] = { x: 0, y: -0.2 }; 
             } else {
-                landmarks[tip] = { x: 0, y: 0.5 };
-                landmarks[pip] = { x: 0, y: 0.3 };
-                landmarks[mcp] = { x: 0, y: 0 };
+                landmarks[tip] = { x: 0, y: -0.1 }; 
+                landmarks[pip] = { x: 0, y: -0.15 };
+                landmarks[mcp] = { x: 0, y: -0.2 }; 
             }
         };
 
@@ -91,6 +83,32 @@ describe('GestureController', () => {
 
         const pose = controller.detectPose(landmarks);
         expect(pose).toBe('two_fingers');
+    });
+
+    it('should detect "l_shape" pose', () => {
+        const landmarks = Array(21).fill({ x: 0, y: 0 }); 
+
+        const setFinger = (tip, pip, mcp, isExtended) => {
+            if (isExtended) {
+                landmarks[tip] = { x: 0, y: -0.8 }; 
+                landmarks[pip] = { x: 0, y: -0.5 };
+                landmarks[mcp] = { x: 0, y: -0.2 }; 
+            } else {
+                landmarks[tip] = { x: 0, y: -0.1 }; 
+                landmarks[pip] = { x: 0, y: -0.15 };
+                landmarks[mcp] = { x: 0, y: -0.2 }; 
+            }
+        };
+
+        // L Shape: Index & Thumb Extended, Others Curled
+        setFinger(8, 7, 6, true);  // Index
+        setFinger(4, 3, 2, true);  // Thumb
+        setFinger(12, 11, 10, false); // Middle
+        setFinger(16, 15, 14, false); // Ring
+        setFinger(20, 19, 18, false); // Pinky
+
+        const pose = controller.detectPose(landmarks);
+        expect(pose).toBe('l_shape');
     });
 
     it('should process rotation from hand movement', () => {

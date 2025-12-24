@@ -188,10 +188,17 @@ export class GestureController {
         const middleExtended = !middleCurled;
         const ringExtended = !ringCurled;
         const pinkyExtended = !pinkyCurled;
+        const thumbExtended = !thumbCurled;
+
+        // "L Shape" (Index & Thumb) -> Photo Navigation Mode
+        // Index & Thumb Extended, others Curled
+        if (indexExtended && thumbExtended && middleCurled && ringCurled && pinkyCurled) {
+            return "l_shape";
+        }
 
         // "One Finger" (Index only) -> Switch to PinkWhite
-        // Strict check: Index UP, Middle/Ring/Pinky DOWN
-        if (indexExtended && middleCurled && ringCurled && pinkyCurled) {
+        // Strict check: Index UP, Thumb/Middle/Ring/Pinky DOWN
+        if (indexExtended && thumbCurled && middleCurled && ringCurled && pinkyCurled) {
             return "one_finger";
         }
 
