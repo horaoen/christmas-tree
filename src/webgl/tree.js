@@ -747,8 +747,8 @@ export class ChristmasTree {
     reset() {
         this.targetScale = 1.3;
         this.targetRotationY = 0;
-        // Do NOT set currentScale directly, allowing smooth transition
-        // this.currentScale = 1.3; 
+        // Also deselect and return any enlarged ornament to its original position
+        this.ornamentManager.select(null);
     }
 
     setTheme(themeName) {

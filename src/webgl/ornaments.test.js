@@ -358,6 +358,24 @@ describe('OrnamentManager', () => {
         expect(treeObject.attach).toHaveBeenCalledWith(ornament); // Verify return to tree
     });
 
+    it('should reset both tree and ornaments state on reset()', () => {
+        const tree = new ChristmasTree(mockScene, mockCamera);
+        const ornament = new THREE.Group();
+        tree.ornamentManager.ornaments = [ornament];
+        
+        // 1. Manually select and change state
+        tree.ornamentManager.select(ornament);
+        tree.targetScale = 5.0;
+        expect(tree.ornamentManager.selectedOrnament).toBe(ornament);
+
+        // 2. Call reset
+        tree.reset();
+
+        // 3. Verify everything is restored
+        expect(tree.targetScale).toBe(1.3);
+        expect(tree.ornamentManager.selectedOrnament).toBeNull();
+    });
+
     it('should update animations', () => {
         // Mock tree scale
         treeObject.scale.set(2.0, 2.0, 2.0); 
