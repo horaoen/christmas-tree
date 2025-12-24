@@ -22,6 +22,11 @@ export function setupScene(canvas) {
     const pointLight = new THREE.PointLight(0xffffff, 2.0); // 降低强度至 2.0
     pointLight.position.set(3, 3, 3); // 稍微拉远
     scene.add(pointLight);
+
+    // Frontal fill light for photos/ornaments
+    const frontLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+    frontLight.position.set(0, 2, 5);
+    scene.add(frontLight);
     // ----------------------
 
     const christmasTree = new ChristmasTree(scene, camera);
