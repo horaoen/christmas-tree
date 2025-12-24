@@ -50,6 +50,7 @@ window.addEventListener('mousemove', (event) => {
 
 // Setup Gesture Controller
 const gestureController = new GestureController();
+let currentPhotoIndex = 0;
 
 gestureController.addEventListener('gesture', (event) => {
     if (event.detail.pose === 'one_finger') {
@@ -58,6 +59,12 @@ gestureController.addEventListener('gesture', (event) => {
     } else if (event.detail.pose === 'two_fingers') {
         christmasTree.setTheme('Classic');
         christmasTree.reset();
+    } else if (event.detail.pose === 'photo_next') {
+        currentPhotoIndex++;
+        currentPhotoIndex = christmasTree.navigateToPhoto(currentPhotoIndex);
+    } else if (event.detail.pose === 'photo_prev') {
+        currentPhotoIndex--;
+        currentPhotoIndex = christmasTree.navigateToPhoto(currentPhotoIndex);
     }
 });
 
