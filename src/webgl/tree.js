@@ -193,14 +193,10 @@ export class OrnamentManager {
         // 1. 照片层 (Photo) - 3:4 比例
         // Note: Photo material needs to be unique per instance because the texture map differs
         // Change to StandardMaterial to react to light and avoid constant bloom overexposure
-        const photoMaterial = new THREE.MeshStandardMaterial({
+        const photoMaterial = new THREE.MeshBasicMaterial({
             transparent: true,
             side: THREE.DoubleSide,
-            color: 0xffffff,
-            roughness: 0.4, 
-            metalness: 0.0,
-            emissive: 0x444444, // Grey glow, preventing whiteout
-            emissiveIntensity: 0.2 // Moderate base brightness
+            color: 0xffffff
         });
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
@@ -298,19 +294,6 @@ export class OrnamentManager {
         this.ornaments.forEach(ornament => {
             const isSelected = ornament === this.selectedOrnament;
             const isHovered = ornament === this.hoveredOrnament;
-            
-            // 获取 Photo Mesh (children[2]) 并动态调整自发光
-            // 确保被选中时照片清晰明亮，不受环境光影响
-            const photoMesh = ornament.children[2];
-            if (photoMesh && photoMesh.material) {
-                if (isSelected) {
-                    // 选中：高亮
-                    photoMesh.material.emissiveIntensity = 0.5; 
-                } else {
-                    // 非选中：基础亮度
-                    photoMesh.material.emissiveIntensity = 0.2;
-                }
-            }
             
             let targetScale = ornament.userData.originalScale.clone();
             let targetPos;

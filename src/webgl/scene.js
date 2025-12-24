@@ -65,10 +65,10 @@ export function setupScene(canvas) {
             
             // Soft glow for stars
             float strength = 1.0 - (dist * 2.0);
-            strength = pow(strength, 2.5); // Slightly softer falloff
+            strength = pow(strength, 2.5); 
             
-            // Brighter cool white (was 0.6) to pop against dark sky
-            gl_FragColor = vec4(0.85, 0.9, 1.0, vAlpha * strength);
+            // Over-bright color (> 1.0) to ensure they glow even with high threshold
+            gl_FragColor = vec4(1.2, 1.3, 1.5, vAlpha * strength);
         }
     `;
 
@@ -127,9 +127,9 @@ export function setupScene(canvas) {
 
     const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        1.2,  // strength
+        0.4,  // strength
         0.8,  // radius 
-        0.85  // threshold (was 0.5) - Strictly only for stars/glints
+        1.0   // threshold (was 0.85) - Only over-bright objects (stars) will glow
     );
 
     const composer = new EffectComposer(renderer);

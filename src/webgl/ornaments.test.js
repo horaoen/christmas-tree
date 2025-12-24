@@ -110,13 +110,13 @@ describe('OrnamentManager', () => {
         expect(frameMesh.geometry.parameters.height).toBeCloseTo(0.26);
     });
 
-    it('should have correct default emissive intensity', () => {
+    it('should use MeshBasicMaterial for photos for 1:1 color', () => {
         const config = [{ id: 'test', path: 'test.png' }];
         manager.loadOrnaments(config);
         const photoMesh = manager.ornaments[0].children[2];
         
-        expect(photoMesh.material.emissiveIntensity).toBe(0.2);
-        expect(photoMesh.material.emissive.getHex()).toBe(0x444444);
+        expect(photoMesh.material instanceof THREE.MeshBasicMaterial).toBe(true);
+        expect(photoMesh.material.color.getHex()).toBe(0xffffff);
     });
 
     it('should calculate correct surface coordinates', () => {
