@@ -716,6 +716,9 @@ export class ChristmasTree {
         // Apply delta to current to get final target
         this.targetRotationY = currentRot + delta;
 
+        // Auto Zoom to focus on the photo
+        this.targetScale = 2.5;
+
         // Optional: Highlight the target
         this.ornamentManager.highlight(targetOrnament);
         

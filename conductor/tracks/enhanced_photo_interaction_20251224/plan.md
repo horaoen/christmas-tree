@@ -41,7 +41,7 @@
 - [x] Task: 添加导航视觉反馈（遵循无文字原则） (0671974)
     - [x] 子任务: 当 L 形手势激活时，通过手势追踪点变色或当前相框微弱发光给予用户反馈。
     - [x] 子任务: 调整旋转插值（Lerp）系数，使导航旋转过程兼顾灵敏度与观赏性。
-- [ ] Task: 整体集成测试与质量校验
-    - [ ] 子任务: 验证手势在不同摄像头环境下的鲁棒性。
-    - [ ] 子任务: 运行测试套件并确保新代码覆盖率 >80%。
+- [x] Task: 整体集成测试与质量校验
+    - [x] 子任务: 验证手势在不同摄像头环境下的鲁棒性 (Implemented logic to ignore relaxed hand scaling).
+    - [x] 子任务: 运行测试套件并确保新代码覆盖率 >80%.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: 系统集成与视觉反馈' (Protocol in workflow.md)

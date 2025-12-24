@@ -166,7 +166,19 @@ export class GestureController {
                 this.smoothedPinchDistance = this.smoothedPinchDistance * 0.7 + activeOpenness * 0.3;
             }
 
-            scaleFactor = this.smoothedPinchDistance;
+            // Disable scale if in L-Shape mode (Navigation)
+            if (activePose === 'l_shape') {
+                scaleFactor = null;
+            } else {
+                // Only output scale if it's meaningful (> 0)
+                // This prevents "Relaxed Hand" (0) from overwriting "Photo Zoom" (2.5)
+                // Threshold 0.05 to account for noise/smoothing tail
+                if (this.smoothedPinchDistance > 0.05) {
+                    scaleFactor = this.smoothedPinchDistance;
+                } else {
+                    scaleFactor = null;
+                }
+            }
         } else {
             this.smoothedPinchDistance = null;
             scaleFactor = null;

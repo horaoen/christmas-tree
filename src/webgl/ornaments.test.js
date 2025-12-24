@@ -178,8 +178,10 @@ describe('OrnamentManager', () => {
         
         // 1. Initial State: Rotation 0. Navigate to Orn1 (Target PI/2)
         tree.treeObject.rotation.y = 0;
+        tree.targetScale = 1.3; // Reset scale
         tree.navigateToPhoto(0);
         expect(tree.targetRotationY).toBeCloseTo(Math.PI / 2);
+        expect(tree.targetScale).toBe(2.5); // Verify Auto Zoom
 
         // 2. From PI/2 navigate to Orn2 (Target 0)
         // Shortest path: PI/2 -> 0 is -PI/2.
