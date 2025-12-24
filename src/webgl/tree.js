@@ -292,6 +292,39 @@ export class OrnamentManager {
     }
 
     /**
+     * Get ornaments sorted by their angle around the Y-axis (atan2(z, x))
+     * Normalized to [0, 2PI] range for cleaner cyclic navigation
+     * @returns {Array} Sorted ornaments
+     */
+    getSortedOrnaments() {
+        return [...this.ornaments].sort((a, b) => {
+            const angleA = Math.atan2(a.position.z, a.position.x);
+            const angleB = Math.atan2(b.position.z, b.position.x);
+            
+            // Normalize to [0, 2PI)
+            const normA = angleA >= 0 ? angleA : angleA + Math.PI * 2;
+            const normB = angleB >= 0 ? angleB : angleB + Math.PI * 2;
+            
+            return normA - normB;
+        });
+    }
+
+    /**
+     * Calculate target rotation Y for tree to bring ornament to front (+Z)
+     * @param {THREE.Mesh} ornament 
+     * @returns {number} Target rotation in radians
+     */
+    getRotationForOrnament(ornament) {
+        if (!ornament) return 0;
+        // Use originalPosition if available to ignore current lerp state
+        const pos = ornament.userData.originalPosition || ornament.position;
+        const angle = Math.atan2(pos.z, pos.x);
+        
+        // Target = PI/2 - Angle
+        return Math.PI / 2 - angle;
+    }
+
+    /**
      * 更新动画
      * @param {number} deltaTime 
      */

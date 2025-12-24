@@ -114,6 +114,56 @@ describe('OrnamentManager', () => {
         expect(frameMesh.geometry.parameters.height).toBeCloseTo(0.26);
     });
 
+    it('should sort ornaments by angle for navigation', () => {
+        // Create 3 ornaments at different angles
+        // angles: 0, PI/2, PI
+        const config = [
+            { id: '1', path: 'path', position: [1, 0, 0] }, // angle 0
+            { id: '2', path: 'path', position: [-1, 0, 0] }, // angle PI (or -PI)
+            { id: '3', path: 'path', position: [0, 0, 1] }  // angle PI/2
+        ];
+        // Load in mixed order
+        manager.loadOrnaments([config[1], config[0], config[2]]);
+
+        const sorted = manager.getSortedOrnaments();
+        
+        // Expected order: -PI to PI or 0 to 2PI
+        // atan2(0, -1) = PI
+        // atan2(0, 1) = 0
+        // atan2(1, 0) = PI/2
+        // Sorted: 0, PI/2, PI -> id: '1', '3', '2'
+        
+        expect(sorted[0].userData.id).toBe('1');
+        expect(sorted[1].userData.id).toBe('3');
+        expect(sorted[2].userData.id).toBe('2');
+    });
+
+    it('should calculate target rotation for specific ornament', () => {
+        // Ornament at angle 0 (+X)
+        // Camera at +Z (PI/2)
+        // Tree needs to rotate +PI/2 (90 deg) to bring +X to +Z?
+        // Let's verify formula: Target = PI/2 - Angle
+        // Target = PI/2 - 0 = PI/2.
+        // Check: Point(1,0,0) rotated by PI/2 -> x = 1*cos(90) - 0 = 0. z = 1*sin(90) = 1. -> (0,0,1). Correct.
+        
+        const ornament = {
+            position: new THREE.Vector3(1, 0, 0), // Angle 0
+            userData: {}
+        };
+        // Mock the ornament in manager
+        manager.ornaments = [ornament];
+        
+        const rotation = manager.getRotationForOrnament(ornament);
+        expect(rotation).toBeCloseTo(Math.PI / 2);
+
+        // Ornament at angle PI/2 (+Z)
+        // Already at front. Target should be 0 (relative to identity tree rotation).
+        // Target = PI/2 - PI/2 = 0.
+        const ornament2 = { position: new THREE.Vector3(0, 0, 1), userData: {} };
+        const rotation2 = manager.getRotationForOrnament(ornament2);
+        expect(rotation2).toBeCloseTo(0);
+    });
+
     it('should use MeshBasicMaterial for photos for 1:1 color', () => {
         const config = [{ id: 'test', path: 'test.png' }];
         manager.loadOrnaments(config);
