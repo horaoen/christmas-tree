@@ -24,7 +24,7 @@ export function setupScene(canvas) {
     scene.add(pointLight);
 
     // Frontal fill light for photos/ornaments
-    const frontLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+    const frontLight = new THREE.DirectionalLight(0xffeedd, 0.5);
     frontLight.position.set(0, 2, 5);
     scene.add(frontLight);
     // ----------------------

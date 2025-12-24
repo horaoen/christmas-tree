@@ -200,7 +200,7 @@ export class OrnamentManager {
             roughness: 0.8, // Matte paper finish
             metalness: 0.0,
             emissive: 0x222222, // Base glow to prevent being too dark
-            emissiveIntensity: 0.5
+            emissiveIntensity: 0.2
         });
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
         photoMesh.position.z = 0.02; 
@@ -306,11 +306,11 @@ export class OrnamentManager {
                 if (isSelected) {
                     // 选中：显著补光
                     photoMesh.material.emissive.setHex(0x444444);
-                    photoMesh.material.emissiveIntensity = 0.8; 
+                    photoMesh.material.emissiveIntensity = 0.5; 
                 } else {
                     // 非选中：保持基础可见性
                     photoMesh.material.emissive.setHex(0x222222);
-                    photoMesh.material.emissiveIntensity = 0.5;
+                    photoMesh.material.emissiveIntensity = 0.2;
                 }
             }
             

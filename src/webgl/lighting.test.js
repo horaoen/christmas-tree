@@ -61,7 +61,7 @@ describe('Scene Lighting', () => {
         scene.traverse((child) => {
             if (child.isDirectionalLight) {
                 directionalLightFound = true;
-                expect(child.intensity).toBe(0.8);
+                expect(child.intensity).toBe(0.5);
                 expect(child.color.getHex()).toBe(0xffeedd);
                 expect(child.position.x).toBe(0);
                 expect(child.position.y).toBe(2);
