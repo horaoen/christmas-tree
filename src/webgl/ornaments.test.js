@@ -27,7 +27,7 @@ describe('OrnamentManager', () => {
             quaternion: new THREE.Quaternion(), 
             getWorldDirection: vi.fn((vec) => vec.set(0, 0, -1)) 
         };
-        manager = new OrnamentManager(treeObject, mockScene, mockCamera);
+        manager = new OrnamentManager(treeObject, mockScene, mockCamera, 16); // Test high anisotropy
     });
 
     it('should initialize with an empty ornaments array', () => {
@@ -72,7 +72,7 @@ describe('OrnamentManager', () => {
         expect(o1.children[2].material).not.toBe(o2.children[2].material);
     });
 
-    it('should assign textures to ornaments', () => {
+    it('should assign textures with correct anisotropy and encoding', () => {
         const config = [{ id: 'bell', path: 'images/ornaments/bell.png' }];
         const texture = new THREE.Texture();
         
@@ -83,9 +83,10 @@ describe('OrnamentManager', () => {
 
         manager.loadOrnaments(config);
         
-        // children[2]: photoMesh
-        const photoMesh = manager.ornaments[0].children[2];
-        expect(photoMesh.material.map).toBe(texture);
+        expect(texture.colorSpace).toBe(THREE.SRGBColorSpace);
+        expect(texture.anisotropy).toBe(16);
+        expect(texture.minFilter).toBe(THREE.LinearMipMapLinearFilter);
+        expect(texture.magFilter).toBe(THREE.LinearFilter);
     });
 
     it('should have 3:4 aspect ratio for photo and frame', () => {
@@ -120,8 +121,8 @@ describe('OrnamentManager', () => {
     });
 
     it('should calculate correct surface coordinates', () => {
-        // Mock tree parameters: height=3, baseRadius=1.2
-        const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
+        // Mock tree parameters: maxAnisotropy=1, particleCount=25000, height=3, baseRadius=1.2
+        const tree = new ChristmasTree(mockScene, mockCamera, 1, 25000, 3, 1.2);
         
         // Test base (h=0)
         // At h=0 (bottom of foliage area, technically treeHeight/2 is top, -treeHeight/2 is bottom)
@@ -172,7 +173,7 @@ describe('OrnamentManager', () => {
         // Slope vector (downward): (1.2, -3, 0) normalized.
         // Normal vector (outward): (3, 1.2, 0) normalized.
         
-        const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
+        const tree = new ChristmasTree(mockScene, mockCamera, 1, 25000, 3, 1.2);
         
         // Test angle 0 (Point on +X axis)
         const normal1 = tree.getSurfaceNormal(0); 
@@ -191,7 +192,7 @@ describe('OrnamentManager', () => {
     it('should generate positions within tree boundaries', () => {
         const height = 3.0;
         const radius = 1.2;
-        const tree = new ChristmasTree(mockScene, mockCamera, 25000, height, radius);
+        const tree = new ChristmasTree(mockScene, mockCamera, 1, 25000, height, radius);
         const positions = tree.calculateOrnamentPositions(20);
 
         positions.forEach(pos => {
@@ -214,7 +215,7 @@ describe('OrnamentManager', () => {
         // 2. Call loadOrnamentsFromImages(['1.jpg', '2.jpg'])
         // 3. Verify 2 ornaments created with correct positions
         
-        const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
+        const tree = new ChristmasTree(mockScene, mockCamera, 1, 25000, 3, 1.2);
         const images = ['img1.jpg', 'img2.jpg', 'img3.jpg'];
         
         // Mock calculateOrnamentPositions to return predictable positions

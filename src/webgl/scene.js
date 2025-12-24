@@ -29,7 +29,7 @@ export function setupScene(canvas) {
     scene.add(frontLight);
     // ----------------------
 
-    const christmasTree = new ChristmasTree(scene, camera);
+    const christmasTree = new ChristmasTree(scene, camera, renderer.capabilities.getMaxAnisotropy());
     scene.add(christmasTree.getTreeObject());
 
     const snowSystem = new SnowSystem(scene, camera);

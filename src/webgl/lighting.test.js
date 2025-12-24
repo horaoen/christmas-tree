@@ -10,7 +10,10 @@ vi.mock('three', async () => {
         WebGLRenderer: class {
             constructor() {
                 this.domElement = document.createElement('canvas');
-                this.capabilities = { isWebGL2: true };
+                this.capabilities = { 
+                    isWebGL2: true,
+                    getMaxAnisotropy: () => 16
+                };
             }
             setSize() {}
             getSize(target) { 

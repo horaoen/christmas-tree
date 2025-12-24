@@ -117,10 +117,11 @@ const starFragmentShader = `
 `;
 
 export class OrnamentManager {
-    constructor(treeObject, scene, camera) {
+    constructor(treeObject, scene, camera, maxAnisotropy = 1) {
         this.treeObject = treeObject;
         this.scene = scene;
         this.camera = camera;
+        this.maxAnisotropy = maxAnisotropy;
         this.ornaments = [];
         this.loader = new THREE.TextureLoader();
         this.selectedOrnament = null;
@@ -218,6 +219,11 @@ export class OrnamentManager {
         group.add(ringMesh);
         
         this.loader.load(item.path, (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = this.maxAnisotropy;
+            texture.minFilter = THREE.LinearMipMapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            
             photoMaterial.map = texture;
             photoMaterial.needsUpdate = true;
         });
@@ -334,7 +340,7 @@ export class OrnamentManager {
 }
 
 export class ChristmasTree {
-    constructor(scene, camera, particleCount = 25000, treeHeight = 3, baseRadius = 1.2) {
+    constructor(scene, camera, maxAnisotropy = 1, particleCount = 25000, treeHeight = 3, baseRadius = 1.2) {
         this.particleCount = particleCount; // Approximate total for foliage
         this.treeHeight = treeHeight;
         this.baseRadius = baseRadius;
@@ -354,7 +360,7 @@ export class ChristmasTree {
             uScatter: { value: 0 }
         };
 
-        this.ornamentManager = new OrnamentManager(this.treeObject, scene, camera);
+        this.ornamentManager = new OrnamentManager(this.treeObject, scene, camera, maxAnisotropy);
         this.colorThemes = [
             // Pink & White: The user's preferred style
             { 
