@@ -3,9 +3,9 @@
 ## Phase 1: 手势识别引擎升级 (Gesture Engine Upgrade)
 目标：实现 L 形手势检测及垂直位移识别，并分发导航事件。
 
-- [ ] Task: 定义并实现 L 形手势检测逻辑
-    - [ ] 子任务: 在 `GestureController.detectPose` 中添加 `l_shape` 识别算法（食指向上，拇指水平）。
-    - [ ] 子任务: 编写 `l_shape` 检测的单元测试。
+- [x] Task: 定义并实现 L 形手势检测逻辑 (382cdb2)
+    - [x] 子任务: 在 `GestureController.detectPose` 中添加 `l_shape` 识别算法（食指向上，拇指水平）。
+    - [x] 子任务: 编写 `l_shape` 检测的单元测试。
 - [ ] Task: 实现基于 L 形手势的垂直位移跟踪
     - [ ] 子任务: 当检测到稳定的 `l_shape` 时，记录 Y 轴起始位置并计算动态位移 delta。
     - [ ] 子任务: 实现位移阈值判断逻辑，触发 `photo_next`（向下划）或 `photo_prev`（向上划）事件。
