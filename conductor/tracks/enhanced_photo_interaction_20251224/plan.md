@@ -1,6 +1,6 @@
 # Implementation Plan - 增强型相框交互与手势控制
 
-## Phase 1: 手势识别引擎升级 (Gesture Engine Upgrade)
+## Phase 1: 手势识别引擎升级 (Gesture Engine Upgrade) [checkpoint: c5f1e90]
 目标：实现 L 形手势检测及垂直位移识别，并分发导航事件。
 
 - [x] Task: 定义并实现 L 形手势检测逻辑 (382cdb2)
@@ -19,7 +19,7 @@
     - [x] 子任务: 引入向量角度计算，提高拇指和食指在不同方向下的识别鲁棒性。
     - [x] 子任务: 在 `GestureController` 中添加详细的调试日志（输出手指弯曲状态、手性）。
     - [x] 子任务: 更新单元测试以覆盖水平指向的 L 形手势。
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: 手势识别引擎升级' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: 手势识别引擎升级' (Protocol in workflow.md)
 
 ## Phase 2: 相框导航与自动对齐逻辑 (Ornament Navigation & Alignment)
 目标：计算相框在树表面的分布角度，并实现平滑旋转对齐功能。
