@@ -63,7 +63,7 @@ export class GestureController {
                 if (this.poseHistory.pose === detectedPose) {
                     // It's the same pose as last frame
                     const duration = now - this.poseHistory.startTime;
-                    if (duration > 200) { // Threshold: 200ms
+                    if (duration > 150) { // Threshold: 150ms (Reduced from 200ms for responsiveness)
                         // Valid Stable Pose
                         activePose = detectedPose;
 
@@ -117,6 +117,11 @@ export class GestureController {
             rotationDelta = deltaX * 5;
         }
         this.lastHandX = avgX;
+
+        // Disable rotation if in L-Shape mode (Navigation)
+        if (activePose === 'l_shape') {
+            rotationDelta = 0;
+        }
 
         // 2. Scale Logic: "Total Hand Openness" (5-Finger Sum)
         // Solves conflict: Poses "1" and "2" have low total openness -> Base Scale.

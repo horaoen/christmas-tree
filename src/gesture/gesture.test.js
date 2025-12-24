@@ -248,19 +248,69 @@ describe('GestureController', () => {
         expect(pose).toBe('l_shape');
     });
 
-    it('should process rotation from hand movement', () => {
-        // Frame 1: Hand at X=0.5
-        const res1 = controller.process({
-            multiHandLandmarks: [[...Array(21).fill({x: 0.5, y:0.5})]]
+    it('should process rotation from hand movement but disable it when in l_shape', () => {
+        // Frame 1: Hand at X=0.5 (Neutral pose)
+        const neutralLandmarks = Array(21).fill({x: 0.5, y:0.5});
+        // Ensure not l_shape (e.g. all fingers extended)
+        // ... (mocking detectPose logic internally or just relying on simple mock if we could, 
+        // but here we must provide landmarks that don't trigger l_shape)
+        // Let's assume default filled 0.5,0.5 doesn't trigger l_shape because fingers aren't clearly curled/extended relative to wrist 0.5,0.5.
+        // Actually wrist is 0.5,0.5. Tip is 0.5,0.5. Dist is 0. Not curled? 
+        // Logic: distTip < distPip * 1.2. 0 < 0? False. So extended?
+        // If all extended, it is "Five Fingers" (Scale mode), but not l_shape.
+        
+        controller.process({
+            multiHandLandmarks: [neutralLandmarks]
         });
         
-        // Frame 2: Hand at X=0.6
+        // Frame 2: Hand at X=0.6 (Neutral pose) -> Should Rotate
         const res2 = controller.process({
-            multiHandLandmarks: [[...Array(21).fill({x: 0.6, y:0.5})]]
+            multiHandLandmarks: [Array(21).fill({x: 0.6, y:0.5})]
         });
+        expect(res2.rotation).toBeCloseTo(0.5); // 0.1 * 5
 
-        // Delta X = 0.1
-        // Rotation = Delta * 5 = 0.5
-        expect(res2.rotation).toBeCloseTo(0.5);
+        // Frame 3: Hand at X=0.7 (L-Shape Active) -> Should NOT Rotate
+        // We need to construct a valid L-Shape landmark set shifted to X=0.7
+        const lShapeLandmarks = Array(21).fill({ x: 0.7, y: 0 }); 
+        
+        // Helper to set finger relative to wrist (0.7, 0)
+        const setFinger = (tip, pip, mcp, isExtended) => {
+            const wristX = 0.7;
+            if (isExtended) {
+                lShapeLandmarks[tip] = { x: wristX, y: -0.8 }; 
+                lShapeLandmarks[pip] = { x: wristX, y: -0.5 };
+                lShapeLandmarks[mcp] = { x: wristX, y: -0.2 }; 
+            } else {
+                lShapeLandmarks[tip] = { x: wristX, y: -0.1 }; 
+                lShapeLandmarks[pip] = { x: wristX, y: -0.15 };
+                lShapeLandmarks[mcp] = { x: wristX, y: -0.2 }; 
+            }
+        };
+        // L Shape Setup
+        setFinger(8, 7, 6, true);  // Index
+        setFinger(4, 3, 2, true);  // Thumb
+        setFinger(12, 11, 10, false); // Middle
+        setFinger(16, 15, 14, false); // Ring
+        setFinger(20, 19, 18, false); // Pinky
+        lShapeLandmarks[17] = { x: 0.8, y: 0.2 }; // Pinky MCP
+
+        // Stabilize L-Shape (requires > 150ms)
+        vi.useFakeTimers();
+        const now = performance.now();
+        vi.setSystemTime(now);
+        
+        controller.process({ multiHandLandmarks: [lShapeLandmarks] });
+        vi.advanceTimersByTime(200);
+        
+        // Now activePose should be l_shape. 
+        // Movement: previous 0.6 -> current 0.7. Delta 0.1. 
+        // If not disabled, rotation would be 0.5.
+        // With fix, should be 0.
+        const res3 = controller.process({ multiHandLandmarks: [lShapeLandmarks] });
+        
+        expect(res3.rotation).toBe(0);
+        expect(res3.activePose).toBe('l_shape');
+        
+        vi.useRealTimers();
     });
 });
