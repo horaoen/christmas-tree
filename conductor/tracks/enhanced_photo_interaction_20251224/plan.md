@@ -27,10 +27,10 @@
 - [x] Task: 增强 OrnamentManager 以支持索引导航 (6c03435)
     - [x] 子任务: 在 `OrnamentManager` 中获取所有照片挂件，并按生成顺序或角度进行排序。
     - [x] 子任务: 为每个相框计算使其正对相机所需的 `targetRotationY`。
-- [ ] Task: 实现平滑对齐旋转功能
-    - [ ] 子任务: 在 `ChristmasTree` 中实现 `navigateToPhoto(index)` 方法。
-    - [ ] 子任务: 优化旋转逻辑，确保在循环切换（如从最后一张到第一张）时选择最短旋转路径。
-    - [ ] 子任务: 编写旋转对齐与路径计算的单元测试。
+- [x] Task: 实现平滑对齐旋转功能 (5a62599)
+    - [x] 子任务: 在 `ChristmasTree` 中实现 `navigateToPhoto(index)` 方法。
+    - [x] 子任务: 优化旋转逻辑，确保在循环切换（如从最后一张到第一张）时选择最短旋转路径。
+    - [x] 子任务: 编写旋转对齐与路径计算的单元测试。
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: 相框导航与自动对齐逻辑' (Protocol in workflow.md)
 
 ## Phase 3: 系统集成与视觉反馈 (Integration & Feedback)
