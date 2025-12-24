@@ -155,13 +155,21 @@ export class GestureController {
     }
 
     // Helper to determine if a finger is curled
+    // Uses distance to wrist to be rotation invariant
     _isFingerCurled(landmarks, tipIdx, pipIdx, mcpIdx) {
+        const wrist = landmarks[0];
         const tip = landmarks[tipIdx];
-        const pip = landmarks[pipIdx];
         const mcp = landmarks[mcpIdx];
 
-        const curlThreshold = 0.03;
-        return (tip.y > pip.y + curlThreshold) && (pip.y > mcp.y + curlThreshold);
+        // Calculate squared distances to wrist
+        const distTipSq = (tip.x - wrist.x) ** 2 + (tip.y - wrist.y) ** 2;
+        const distMcpSq = (mcp.x - wrist.x) ** 2 + (mcp.y - wrist.y) ** 2;
+
+        // If the tip is closer to the wrist than the knuckle (MCP) is, 
+        // or slightly further (relaxed curl), it is considered curled.
+        // Extended fingers have tips much further away.
+        // Factor 1.5 (squared) corresponds to ~1.22x linear distance.
+        return distTipSq < (distMcpSq * 1.5);
     }
 
     // Detects specific poses like "one_finger" or "two_fingers"
