@@ -97,8 +97,9 @@ describe('OrnamentManager', () => {
         // children[0]: frameMesh (Box)
         // children[1]: matteMesh (Plane)
         // children[2]: photoMesh (Plane)
-        const frameMesh = group.children[0];
+        // Note: New Z-ordering means Photo is at z=0.006
         const photoMesh = group.children[2];
+        expect(photoMesh.position.z).toBeCloseTo(0.006);
 
         // 验证 PhotoMesh 比例 (3:4)
         // Expected: width=0.15, height=0.20
@@ -260,8 +261,19 @@ describe('OrnamentManager', () => {
     });
 
     it('should update animations', () => {
-        // 主要是确保 update 方法可调用且不报错
-        expect(() => manager.update(0.016)).not.toThrow();
+        // Mock tree scale
+        treeObject.scale.set(2.0, 2.0, 2.0); 
+        
+        const config = [{ id: 'test', path: 't.png' }];
+        manager.loadOrnaments(config);
+        const ornament = manager.ornaments[0];
+        
+        // Initial update
+        manager.update(0.016);
+        
+        // With treeScale=2.0, ornament scale should be < 1.0 (Counter-scaled)
+        // counterScale = 1.0 / (2.0 * 0.8) = 1.0 / 1.6 = 0.625
+        expect(ornament.scale.x).toBeLessThan(1.0);
     });
 
     it('should highlight an ornament', () => {

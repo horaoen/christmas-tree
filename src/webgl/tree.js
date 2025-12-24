@@ -137,11 +137,12 @@ export class OrnamentManager {
             photo: new THREE.PlaneGeometry(photoWidth, photoHeight),
             matte: new THREE.PlaneGeometry(photoWidth + mattePadding, photoHeight + mattePadding),
             frame: new THREE.BoxGeometry(photoWidth + framePadding, photoHeight + framePadding, 0.01),
-            ring: new THREE.TorusGeometry(0.025, 0.004, 8, 16)
+            // Reduced ring size: radius 0.025 -> 0.015, tube 0.004 -> 0.002
+            ring: new THREE.TorusGeometry(0.015, 0.002, 8, 16) 
         };
 
         this.sharedMaterial = {
-            matte: new THREE.MeshBasicMaterial({ color: 0x555555 }),
+            matte: new THREE.MeshBasicMaterial({ color: 0xfffff0 }),
             frame: new THREE.MeshStandardMaterial({
                 color: 0x654321, 
                 roughness: 0.2,
@@ -155,13 +156,13 @@ export class OrnamentManager {
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
             texture.repeat.set(2, 2);
+            texture.colorSpace = THREE.SRGBColorSpace; // Ensure correct color space for wood too
             this.sharedMaterial.frame.map = texture;
             this.sharedMaterial.frame.bumpMap = texture;
             this.sharedMaterial.frame.bumpScale = 0.005;
             this.sharedMaterial.frame.needsUpdate = true;
         });
     }
-
     /**
      * 选择挂件进行展示
      * @param {THREE.Mesh|null} ornament 
@@ -181,37 +182,35 @@ export class OrnamentManager {
         }
     }
 
-    /**
-     * 创建单个挂件对象
-     * @param {Object} item 配置项
-     * @returns {THREE.Group}
-     */
     createOrnament(item) {
         const group = new THREE.Group();
-        const photoHeight = 0.20; // Need this for ring positioning
+        const photoHeight = 0.20; 
         const framePadding = 0.06;
 
-        // 1. 照片层 (Photo) - 3:4 比例
-        // Note: Photo material needs to be unique per instance because the texture map differs
-        // Change to StandardMaterial to react to light and avoid constant bloom overexposure
         const photoMaterial = new THREE.MeshBasicMaterial({
             transparent: true,
             side: THREE.DoubleSide,
             color: 0xffffff
         });
+
+        // 1. 照片层 (Photo) - Tighter Z-spacing to reduce gaps
+        // z: 0.006 -> 0.0052 (Very close to matte)
         const photoMesh = new THREE.Mesh(this.sharedGeometry.photo, photoMaterial);
-        photoMesh.position.z = 0.02; 
+        photoMesh.position.z = 0.0052; 
 
         // 2. 衬底层
+        // z: 0.0055 -> 0.0051 (Very close to frame front face which is at 0.005)
         const matteMesh = new THREE.Mesh(this.sharedGeometry.matte, this.sharedMaterial.matte);
-        matteMesh.position.z = 0.01;
+        matteMesh.position.z = 0.0051;
 
-        // 3. 外框层
+        // 3. 外框层 (Frame is 0.01 thick, centered at 0, so front face is at 0.005)
         const frameMesh = new THREE.Mesh(this.sharedGeometry.frame, this.sharedMaterial.frame);
 
         // 4. 顶部挂环
         const ringMesh = new THREE.Mesh(this.sharedGeometry.ring, this.sharedMaterial.ring);
-        ringMesh.position.set(0, (photoHeight + framePadding) / 2 + 0.015, 0); 
+        // Adjusted y position for smaller ring
+        ringMesh.position.set(0, (photoHeight + framePadding) / 2 + 0.01, 0); 
+ 
 
         group.add(frameMesh);
         group.add(matteMesh);
@@ -297,6 +296,9 @@ export class OrnamentManager {
      * @param {number} deltaTime 
      */
     update(deltaTime) {
+        // Get global tree scale factor
+        const treeScale = this.treeObject.scale.x;
+
         this.ornaments.forEach(ornament => {
             const isSelected = ornament === this.selectedOrnament;
             const isHovered = ornament === this.hoveredOrnament;
@@ -307,24 +309,26 @@ export class OrnamentManager {
 
             if (isSelected) {
                 // 选中状态：移动到摄像机前方
-                // 目标位置：摄像机位置 + 摄像机前方 1.5 米
+                // ... (unchanged logic for selection)
                 const cameraDirection = new THREE.Vector3();
                 this.camera.getWorldDirection(cameraDirection);
                 targetPos = this.camera.position.clone().add(cameraDirection.multiplyScalar(1.5));
                 
-                // 目标旋转：面向摄像机
                 targetQuat = this.camera.quaternion.clone();
-
-                // 选中时显着放大以便观察
-                targetScale.set(3.5, 3.5, 3.5); 
+                targetScale.set(3.5, 3.5, 3.5); // Selection size is absolute
 
             } else {
-                // 非选中状态：回归原位 (Local Space)
+                // 非选中状态：Counter-Scaling
+                // When tree scales up, shrink the ornament locally so it doesn't block view
+                // We divide by treeScale to maintain roughly constant visual size
+                // or at least prevent linear growth.
+                const counterScale = 1.0 / Math.max(1.0, treeScale * 0.8);
+                targetScale.multiplyScalar(counterScale);
+
                 targetPos = ornament.userData.originalPosition.clone();
                 targetQuat = ornament.userData.originalQuaternion || new THREE.Quaternion();
 
                 if (isHovered) {
-                    // 悬停状态：轻微放大
                     targetScale.multiplyScalar(1.5);
                 }
             }
@@ -400,18 +404,13 @@ export class ChristmasTree {
         this.generateTree();
         this._applyTheme(this.colorThemes[this.currentThemeIndex]);
 
-        // 加载动态图片配置
-        const images = [
-            'images/ornaments/1.JPG',
-            'images/ornaments/2.JPG',
-            'images/ornaments/3.JPG',
-            'images/ornaments/4.JPG',
-            'images/ornaments/5.JPG',
-            'images/ornaments/6.JPG',
-            'images/ornaments/bell.png',     // 保留一些经典装饰
-            'images/ornaments/gift.png',
-            'images/ornaments/snowflake.png'
-        ];
+        // 加载动态图片配置 (使用 Vite 的 glob 导入功能动态获取文件夹下的所有图片)
+        const imageModules = import.meta.glob('../../images/ornaments/*.{jpg,JPG,jpeg,JPEG,png,PNG,webp,WEBP}', { 
+            eager: true, 
+            import: 'default' 
+        });
+        const images = Object.values(imageModules);
+
         this.loadOrnamentsFromImages(images);
     }
 
