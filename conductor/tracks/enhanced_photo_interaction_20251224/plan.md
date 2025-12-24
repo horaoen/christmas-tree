@@ -21,7 +21,7 @@
     - [x] 子任务: 更新单元测试以覆盖水平指向的 L 形手势。
 - [x] Task: Conductor - User Manual Verification 'Phase 1: 手势识别引擎升级' (Protocol in workflow.md)
 
-## Phase 2: 相框导航与自动对齐逻辑 (Ornament Navigation & Alignment)
+## Phase 2: 相框导航与自动对齐逻辑 (Ornament Navigation & Alignment) [checkpoint: e9e495f]
 目标：计算相框在树表面的分布角度，并实现平滑旋转对齐功能。
 
 - [x] Task: 增强 OrnamentManager 以支持索引导航 (6c03435)
@@ -31,7 +31,7 @@
     - [x] 子任务: 在 `ChristmasTree` 中实现 `navigateToPhoto(index)` 方法。
     - [x] 子任务: 优化旋转逻辑，确保在循环切换（如从最后一张到第一张）时选择最短旋转路径。
     - [x] 子任务: 编写旋转对齐与路径计算的单元测试。
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: 相框导航与自动对齐逻辑' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: 相框导航与自动对齐逻辑' (Protocol in workflow.md)
 
 ## Phase 3: 系统集成与视觉反馈 (Integration & Feedback)
 目标：打通手势与导航逻辑，并根据产品准则添加沉浸式反馈。
