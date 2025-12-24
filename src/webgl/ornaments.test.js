@@ -107,6 +107,8 @@ describe('OrnamentManager', () => {
         expect(photoMesh.geometry.parameters.height).toBeCloseTo(0.20);
 
         // 验证 FrameMesh 比例
+        // children[0]: frameMesh (Box)
+        const frameMesh = group.children[0];
         // Expected: width=0.21, height=0.26
         expect(frameMesh.geometry.parameters.width).toBeCloseTo(0.21);
         expect(frameMesh.geometry.parameters.height).toBeCloseTo(0.26);
