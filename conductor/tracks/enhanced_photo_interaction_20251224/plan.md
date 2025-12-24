@@ -10,6 +10,11 @@
     - [x] 子任务: 当检测到稳定的 `l_shape` 时，记录 Y 轴起始位置并计算动态位移 delta.
     - [x] 子任务: 实现位移阈值判断逻辑，触发 `photo_next`（向下划）或 `photo_prev`（向上划）事件.
     - [x] 子任务: 编写位移触发逻辑的单元测试.
+- [x] Task: 重构：将导航逻辑改为基于左右手区分 (User Feedback) (3ad22c2)
+    - [x] 子任务: 更新 `GestureController.process` 以解析 `multiHandedness` 数据。
+    - [x] 子任务: 实现逻辑：左手 L 形触发 `photo_next`，右手 L 形触发 `photo_prev`。
+    - [x] 子任务: 移除旧的垂直位移代码，并调整冷却时间以适应离散触发。
+    - [x] 子任务: 更新相关单元测试。
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: 手势识别引擎升级' (Protocol in workflow.md)
 
 ## Phase 2: 相框导航与自动对齐逻辑 (Ornament Navigation & Alignment)
