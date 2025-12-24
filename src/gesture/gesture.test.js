@@ -34,6 +34,7 @@ describe('GestureController', () => {
 
     it('should detect "one_finger" pose', () => {
         const landmarks = Array(21).fill({ x: 0, y: 0 }); // Default
+        landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
         
         // Helper to set finger
         const setFinger = (tip, pip, mcp, isExtended) => {
@@ -61,6 +62,7 @@ describe('GestureController', () => {
 
     it('should detect "two_fingers" pose', () => {
         const landmarks = Array(21).fill({ x: 0, y: 0 }); 
+        landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
 
         const setFinger = (tip, pip, mcp, isExtended) => {
             if (isExtended) {
@@ -87,6 +89,7 @@ describe('GestureController', () => {
 
     it('should detect "l_shape" pose', () => {
         const landmarks = Array(21).fill({ x: 0, y: 0 }); 
+        landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
 
         const setFinger = (tip, pip, mcp, isExtended) => {
             if (isExtended) {
@@ -119,20 +122,31 @@ describe('GestureController', () => {
         const landmarks = Array(21).fill({ x: 0, y: 0 });
         // Set L-shape
         const setLShape = () => {
+             landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
+             
              // Index & Thumb Extended
+             // Index Tip=8, PIP=7, MCP=6
              landmarks[8] = { x: 0, y: -0.8 }; 
              landmarks[7] = { x: 0, y: -0.5 };
              landmarks[6] = { x: 0, y: -0.2 }; 
+             
+             // Thumb Tip=4, MCP=2, IP=3
              landmarks[4] = { x: 0, y: -0.8 }; 
              landmarks[3] = { x: 0, y: -0.5 };
              landmarks[2] = { x: 0, y: -0.2 };
+             
              // Others curled
+             // Middle Tip=12, PIP=11
              landmarks[12] = { x: 0, y: -0.1 };
-             landmarks[11] = { x: 0, y: -0.15 };
+             landmarks[11] = { x: 0, y: -0.15 }; // Tip closer to wrist than PIP
              landmarks[10] = { x: 0, y: -0.2 };
+             
+             // Ring Tip=16, PIP=15
              landmarks[16] = { x: 0, y: -0.1 };
              landmarks[15] = { x: 0, y: -0.15 };
              landmarks[14] = { x: 0, y: -0.2 };
+             
+             // Pinky Tip=20, PIP=19
              landmarks[20] = { x: 0, y: -0.1 };
              landmarks[19] = { x: 0, y: -0.15 };
              landmarks[18] = { x: 0, y: -0.2 };
@@ -197,6 +211,41 @@ describe('GestureController', () => {
         }));
 
         vi.useRealTimers();
+    });
+
+    it('should detect horizontal L-shape (Gun gesture)', () => {
+        // Mock landmarks for Horizontal L-shape
+        // Index pointing RIGHT (x increases), Thumb pointing UP (y decreases)
+        const landmarks = Array(21).fill({ x: 0, y: 0 }); 
+        
+        // Wrist at 0,0
+        // Pinky MCP (Base of palm reference for thumb)
+        landmarks[17] = { x: 0.1, y: 0.2 }; 
+
+        // Index (Horizontal Extended): MCP(0.1, 0), PIP(0.3, 0), Tip(0.5, 0)
+        landmarks[6] = { x: 0.1, y: 0 };
+        landmarks[7] = { x: 0.3, y: 0 };
+        landmarks[8] = { x: 0.5, y: 0 };
+
+        // Thumb (Vertical Extended): MCP(0.1, -0.1), Tip(0.1, -0.4)
+        landmarks[2] = { x: 0.1, y: -0.1 };
+        landmarks[3] = { x: 0.1, y: -0.2 };
+        landmarks[4] = { x: 0.1, y: -0.4 }; 
+
+        // Others Curled (Tip closer to wrist than PIP)
+        [12, 16, 20].forEach(tip => {
+            landmarks[tip] = { x: 0.1, y: 0.1 }; 
+        });
+        [10, 14, 18].forEach(pip => { // Use PIP indices for loop logic if consistent
+             // Actually loop sets tip. Set PIP manually.
+        });
+        // Set PIPs for Middle, Ring, Pinky
+        landmarks[11] = { x: 0.15, y: 0.15 }; // PIP further
+        landmarks[15] = { x: 0.15, y: 0.25 };
+        landmarks[19] = { x: 0.15, y: 0.35 };
+
+        const pose = controller.detectPose(landmarks);
+        expect(pose).toBe('l_shape');
     });
 
     it('should process rotation from hand movement', () => {

@@ -180,17 +180,37 @@ export class GestureController {
     _isFingerCurled(landmarks, tipIdx, pipIdx, mcpIdx) {
         const wrist = landmarks[0];
         const tip = landmarks[tipIdx];
-        const mcp = landmarks[mcpIdx];
+        const pip = landmarks[pipIdx]; // Use PIP for better accuracy
 
         // Calculate squared distances to wrist
         const distTipSq = (tip.x - wrist.x) ** 2 + (tip.y - wrist.y) ** 2;
-        const distMcpSq = (mcp.x - wrist.x) ** 2 + (mcp.y - wrist.y) ** 2;
+        const distPipSq = (pip.x - wrist.x) ** 2 + (pip.y - wrist.y) ** 2;
 
-        // If the tip is closer to the wrist than the knuckle (MCP) is, 
-        // or slightly further (relaxed curl), it is considered curled.
-        // Extended fingers have tips much further away.
-        // Factor 1.5 (squared) corresponds to ~1.22x linear distance.
-        return distTipSq < (distMcpSq * 1.5);
+        // If tip is closer to wrist than PIP is, it's definitely curled.
+        // We add a small buffer (1.1x) to handle loose curls.
+        return distTipSq < (distPipSq * 1.2);
+    }
+
+    // Special check for thumb (it behaves differently)
+    _isThumbCurled(landmarks) {
+        const wrist = landmarks[0];
+        const tip = landmarks[4];
+        const ip = landmarks[3];
+        const mcp = landmarks[2];
+        const pinkyMcp = landmarks[17];
+
+        // 1. Distance Check: Tip to PinkyMCP
+        // If thumb tip is close to pinky base, it's curled/tucked.
+        const distTipPinkySq = (tip.x - pinkyMcp.x) ** 2 + (tip.y - pinkyMcp.y) ** 2;
+        const distMcpPinkySq = (mcp.x - pinkyMcp.x) ** 2 + (mcp.y - pinkyMcp.y) ** 2;
+        
+        // If tip is closer to pinky base than MCP is, it's curled
+        if (distTipPinkySq < distMcpPinkySq) return true;
+
+        // 2. Vector Alignment Check (optional, for "L" shape accuracy)
+        // Ensure thumb is pointing away from fingers? 
+        // For now, simple distance check is usually robust for "Fist" vs "Open".
+        return false;
     }
 
     // Detects specific poses like "one_finger" or "two_fingers"
@@ -202,7 +222,10 @@ export class GestureController {
         const middleCurled = this._isFingerCurled(landmarks, 12, 11, 10);
         const ringCurled = this._isFingerCurled(landmarks, 16, 15, 14);
         const pinkyCurled = this._isFingerCurled(landmarks, 20, 19, 18);
-        const thumbCurled = this._isFingerCurled(landmarks, 4, 3, 2); // Simple thumb check
+        const thumbCurled = this._isThumbCurled(landmarks); 
+
+        // Debug Log (Throttled or situational)
+        console.log(`I:${!indexCurled} M:${!middleCurled} R:${!ringCurled} P:${!pinkyCurled} T:${!thumbCurled}`);
 
         // Extended fingers
         const indexExtended = !indexCurled;
