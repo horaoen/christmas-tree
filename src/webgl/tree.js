@@ -679,6 +679,40 @@ export class ChristmasTree {
         }
     }
 
+    /**
+     * Navigate to a specific photo index
+     * @param {number} index Index in the sorted ornament list
+     */
+    navigateToPhoto(index) {
+        const sorted = this.ornamentManager.getSortedOrnaments();
+        if (!sorted || sorted.length === 0) return;
+
+        // Wrap index
+        const count = sorted.length;
+        const validIndex = (index % count + count) % count;
+        
+        const targetOrnament = sorted[validIndex];
+        
+        // Calculate absolute target rotation
+        const absoluteTargetRot = this.ornamentManager.getRotationForOrnament(targetOrnament);
+        
+        // Current rotation
+        const currentRot = this.treeObject.rotation.y;
+        
+        // Find shortest path delta
+        // Normalize delta to [-PI, PI] using atan2 trick
+        let delta = absoluteTargetRot - currentRot;
+        delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+        
+        // Apply delta to current to get final target
+        this.targetRotationY = currentRot + delta;
+
+        // Optional: Highlight the target
+        this.ornamentManager.highlight(targetOrnament);
+        
+        return validIndex; // Return actual index for UI tracking if needed
+    }
+
     getTreeObject() {
         return this.treeObject;
     }
