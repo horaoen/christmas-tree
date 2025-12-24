@@ -120,8 +120,8 @@ describe('GestureController', () => {
         [12,16,20].forEach(tip => landmarks[tip] = { x: 0.1, y: 0.05 });
         [11,15,19].forEach(pip => landmarks[pip] = { x: 0.1, y: 0.1 });
 
-        // Warm up
-        vi.advanceTimersByTime(1000);
+        // Warm up by 2000ms to clear the 1500ms cooldown
+        vi.advanceTimersByTime(2000);
 
         // 1. Left Hand
         controller.process({ multiHandLandmarks: [landmarks], multiHandedness: [{ label: 'Left' }] });
@@ -130,7 +130,7 @@ describe('GestureController', () => {
         expect(lastPose).toBe('photo_next');
         
         lastPose = null;
-        vi.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(2000); // Increased to 2000ms to clear the 1500ms cooldown
 
         // 2. Right Hand
         controller.process({ multiHandLandmarks: [] }); 

@@ -4,7 +4,7 @@ export class GestureController {
         this.smoothedPinchDistance = null;
 
         this.gestureCooldown = 500; // milliseconds
-        this.navigationCooldown = 800; // Slower for discrete switching
+        this.navigationCooldown = 1500; // Slower for discrete switching (1.5s per request)
         this.lastGestureTime = {
             fist: 0,
             victory: 0,
