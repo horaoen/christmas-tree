@@ -251,15 +251,27 @@ export class GestureController {
         const pinkyExtended = !pinkyCurled;
         const thumbExtended = !thumbCurled;
 
-        // "L Shape" (Index & Thumb) -> Photo Navigation Mode
-        // Index & Thumb Extended, others Curled
-        if (indexExtended && thumbExtended && middleCurled && ringCurled && pinkyCurled) {
-            return "l_shape";
-        }
+        // "One Finger" vs "L Shape" Logic
+        // Both require Index UP, Middle/Ring/Pinky DOWN
+        if (indexExtended && middleCurled && ringCurled && pinkyCurled) {
+            if (thumbExtended) {
+                // L-Shape needs significant Thumb-Index separation
+                const thumbTip = landmarks[4];
+                const indexTip = landmarks[8];
+                const wrist = landmarks[0];
+                const middleMcp = landmarks[9];
+                
+                const distTI = Math.sqrt((thumbTip.x - indexTip.x)**2 + (thumbTip.y - indexTip.y)**2);
+                const handSize = Math.sqrt((wrist.x - middleMcp.x)**2 + (wrist.y - middleMcp.y)**2);
 
-        // "One Finger" (Index only) -> Switch to PinkWhite
-        // Strict check: Index UP, Thumb/Middle/Ring/Pinky DOWN
-        if (indexExtended && thumbCurled && middleCurled && ringCurled && pinkyCurled) {
+                // Threshold: In L-shape, thumb tip is far from index tip
+                // Ratio > 0.8 is typical for a clear L
+                if (distTI > handSize * 0.8) {
+                    return "l_shape";
+                }
+            }
+            
+            // If thumb is curled, OR thumb is extended but close to index (relaxed "1")
             return "one_finger";
         }
 

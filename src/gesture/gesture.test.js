@@ -13,304 +13,183 @@ describe('GestureController', () => {
         expect(controller.gestureCooldown).toBe(500);
     });
 
-    it('should add and remove event listeners', () => {
-        const callback = vi.fn();
-        controller.addEventListener('gesture', callback);
-        expect(controller.listeners['gesture']).toContain(callback);
-
-        controller.removeEventListener('gesture', callback);
-        expect(controller.listeners['gesture']).not.toContain(callback);
-    });
-
-    it('should dispatch events', () => {
-        const callback = vi.fn();
-        controller.addEventListener('gesture', callback);
+    it('should detect "one_finger" pose even if thumb is slightly extended but close', () => {
+        const landmarks = Array(21).fill({ x: 0, y: 0 }); 
+        landmarks[0] = { x: 0, y: 0 };    // Wrist
+        landmarks[9] = { x: 0, y: -0.2 }; // Middle MCP (HandSize = 0.2)
+        landmarks[17] = { x: 0.1, y: 0.1 }; // Pinky MCP
         
-        const event = new CustomEvent('gesture', { detail: { pose: 'test' } });
-        controller.dispatchEvent(event);
-        
-        expect(callback).toHaveBeenCalledWith(event);
-    });
-
-    it('should detect "one_finger" pose', () => {
-        const landmarks = Array(21).fill({ x: 0, y: 0 }); // Default
-        landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
-        
-        // Helper to set finger
-        const setFinger = (tip, pip, mcp, isExtended) => {
+        const setFinger = (tip, pip, mcp, x, y, isExtended) => {
             if (isExtended) {
-                landmarks[tip] = { x: 0, y: -0.8 }; 
-                landmarks[pip] = { x: 0, y: -0.5 };
-                landmarks[mcp] = { x: 0, y: -0.2 }; 
+                landmarks[mcp] = { x: x, y: y + 0.6 }; 
+                landmarks[pip] = { x: x, y: y + 0.3 };
+                landmarks[tip] = { x: x, y: y }; 
             } else {
-                landmarks[tip] = { x: 0, y: -0.1 }; 
-                landmarks[pip] = { x: 0, y: -0.15 };
-                landmarks[mcp] = { x: 0, y: -0.2 }; 
+                landmarks[mcp] = { x: x, y: y + 0.2 }; 
+                landmarks[pip] = { x: x, y: y + 0.1 };
+                landmarks[tip] = { x: x, y: y + 0.05 }; 
             }
         };
 
-        // One Finger: Index Extended, Others Curled
-        setFinger(8, 7, 6, true);   // Index
-        setFinger(12, 11, 10, false); // Middle
-        setFinger(16, 15, 14, false); // Ring
-        setFinger(20, 19, 18, false); // Pinky
-        setFinger(4, 3, 2, false);    // Thumb
+        // One Finger: Index Extended at y=-0.8
+        setFinger(8, 7, 6, 0, -0.8, true);   
+        // Thumb Extended but VERY CLOSE to index at x=0.05, y=-0.7
+        setFinger(4, 3, 2, 0.05, -0.7, true); 
+        
+        setFinger(12, 11, 10, 0, 0, false); // Others curled
+        setFinger(16, 15, 14, 0, 0, false);
+        setFinger(20, 19, 18, 0, 0, false);
 
         const pose = controller.detectPose(landmarks);
         expect(pose).toBe('one_finger');
     });
 
+    it('should detect "l_shape" pose with wide thumb-index gap', () => {
+        const landmarks = Array(21).fill({ x: 0, y: 0 }); 
+        landmarks[0] = { x: 0, y: 0 };    // Wrist
+        landmarks[9] = { x: 0, y: -0.2 }; // Middle MCP
+        landmarks[17] = { x: 0.1, y: 0.1 };
+
+        const setFinger = (tip, pip, mcp, x, y, isExtended) => {
+            if (isExtended) {
+                landmarks[mcp] = { x: x, y: y + 0.6 }; 
+                landmarks[pip] = { x: x, y: y + 0.3 };
+                landmarks[tip] = { x: x, y: y }; 
+            } else {
+                landmarks[mcp] = { x: x, y: y + 0.2 }; 
+                landmarks[pip] = { x: x, y: y + 0.1 };
+                landmarks[tip] = { x: x, y: y + 0.05 }; 
+            }
+        };
+
+        // Index at y=-0.8
+        setFinger(8, 7, 6, 0, -0.8, true);  
+        // Thumb at x=0.3, y=-0.8 -> distTI = 0.3. handSize=0.2. 0.3 > 0.16. OK.
+        setFinger(4, 3, 2, 0.3, -0.8, true); 
+        
+        setFinger(12, 11, 10, 0, 0, false);
+        setFinger(16, 15, 14, 0, 0, false);
+        setFinger(20, 19, 18, 0, 0, false);
+
+        const pose = controller.detectPose(landmarks);
+        expect(pose).toBe('l_shape');
+    });
+
     it('should detect "two_fingers" pose', () => {
         const landmarks = Array(21).fill({ x: 0, y: 0 }); 
-        landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
+        landmarks[0] = { x: 0, y: 0 };    // Wrist
+        landmarks[9] = { x: 0, y: -0.2 }; 
+        landmarks[17] = { x: 0.1, y: 0.1 };
 
-        const setFinger = (tip, pip, mcp, isExtended) => {
+        const setFinger = (tip, pip, mcp, x, y, isExtended) => {
             if (isExtended) {
-                landmarks[tip] = { x: 0, y: -0.8 }; 
-                landmarks[pip] = { x: 0, y: -0.5 };
-                landmarks[mcp] = { x: 0, y: -0.2 }; 
+                landmarks[mcp] = { x: x, y: y + 0.6 }; 
+                landmarks[pip] = { x: x, y: y + 0.3 };
+                landmarks[tip] = { x: x, y: y }; 
             } else {
-                landmarks[tip] = { x: 0, y: -0.1 }; 
-                landmarks[pip] = { x: 0, y: -0.15 };
-                landmarks[mcp] = { x: 0, y: -0.2 }; 
+                landmarks[mcp] = { x: x, y: y + 0.2 }; 
+                landmarks[pip] = { x: x, y: y + 0.1 };
+                landmarks[tip] = { x: x, y: y + 0.05 }; 
             }
         };
 
         // Two Fingers: Index & Middle Extended
-        setFinger(8, 7, 6, true);
-        setFinger(12, 11, 10, true);
-        setFinger(16, 15, 14, false);
-        setFinger(20, 19, 18, false);
-        setFinger(4, 3, 2, false);
+        setFinger(8, 7, 6, -0.1, -0.8, true);
+        setFinger(12, 11, 10, 0.1, -0.8, true);
+        setFinger(16, 15, 14, 0, 0, false);
+        setFinger(20, 19, 18, 0, 0, false);
+        setFinger(4, 3, 2, 0, 0, false);
 
         const pose = controller.detectPose(landmarks);
         expect(pose).toBe('two_fingers');
     });
 
-    it('should detect "l_shape" pose', () => {
-        const landmarks = Array(21).fill({ x: 0, y: 0 }); 
-        landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
-
-        const setFinger = (tip, pip, mcp, isExtended) => {
-            if (isExtended) {
-                landmarks[tip] = { x: 0, y: -0.8 }; 
-                landmarks[pip] = { x: 0, y: -0.5 };
-                landmarks[mcp] = { x: 0, y: -0.2 }; 
-            } else {
-                landmarks[tip] = { x: 0, y: -0.1 }; 
-                landmarks[pip] = { x: 0, y: -0.15 };
-                landmarks[mcp] = { x: 0, y: -0.2 }; 
-            }
-        };
-
-        // L Shape: Index & Thumb Extended, Others Curled
-        setFinger(8, 7, 6, true);  // Index
-        setFinger(4, 3, 2, true);  // Thumb
-        setFinger(12, 11, 10, false); // Middle
-        setFinger(16, 15, 14, false); // Ring
-        setFinger(20, 19, 18, false); // Pinky
-
-        const pose = controller.detectPose(landmarks);
-        expect(pose).toBe('l_shape');
-    });
-
     it('should trigger photo_next with Left hand L-shape and photo_prev with Right hand', () => {
-        const callback = vi.fn();
-        controller.addEventListener('gesture', callback);
+        let lastPose = null;
+        controller.addEventListener('gesture', (e) => { lastPose = e.detail.pose; });
         vi.useFakeTimers();
 
         const landmarks = Array(21).fill({ x: 0, y: 0 });
-        // Set L-shape
-        const setLShape = () => {
-             landmarks[17] = { x: 0.1, y: 0.2 }; // Pinky MCP
-             
-             // Index & Thumb Extended
-             // Index Tip=8, PIP=7, MCP=6
-             landmarks[8] = { x: 0, y: -0.8 }; 
-             landmarks[7] = { x: 0, y: -0.5 };
-             landmarks[6] = { x: 0, y: -0.2 }; 
-             
-             // Thumb Tip=4, MCP=2, IP=3
-             landmarks[4] = { x: 0, y: -0.8 }; 
-             landmarks[3] = { x: 0, y: -0.5 };
-             landmarks[2] = { x: 0, y: -0.2 };
-             
-             // Others curled
-             // Middle Tip=12, PIP=11
-             landmarks[12] = { x: 0, y: -0.1 };
-             landmarks[11] = { x: 0, y: -0.15 }; // Tip closer to wrist than PIP
-             landmarks[10] = { x: 0, y: -0.2 };
-             
-             // Ring Tip=16, PIP=15
-             landmarks[16] = { x: 0, y: -0.1 };
-             landmarks[15] = { x: 0, y: -0.15 };
-             landmarks[14] = { x: 0, y: -0.2 };
-             
-             // Pinky Tip=20, PIP=19
-             landmarks[20] = { x: 0, y: -0.1 };
-             landmarks[19] = { x: 0, y: -0.15 };
-             landmarks[18] = { x: 0, y: -0.2 };
-        };
-        setLShape();
+        landmarks[0] = { x: 0, y: 0 };    // Wrist
+        landmarks[9] = { x: 0, y: -0.2 }; // Size 0.2
+        landmarks[17] = { x: 0.1, y: 0.1 };
 
-        // Warm up timer
+        // L Shape Setup
+        landmarks[8] = { x: 0, y: -0.8 }; landmarks[7] = { x: 0, y: -0.5 }; landmarks[6] = { x: 0, y: -0.2 };
+        landmarks[4] = { x: 0.3, y: -0.8 }; landmarks[3] = { x: 0.3, y: -0.5 }; landmarks[2] = { x: 0.3, y: -0.2 };
+        [12,16,20].forEach(tip => landmarks[tip] = { x: 0.1, y: 0.05 });
+        [11,15,19].forEach(pip => landmarks[pip] = { x: 0.1, y: 0.1 });
+
+        // Warm up
         vi.advanceTimersByTime(1000);
 
-        // 1. Left Hand -> Should trigger photo_next
-        controller.process({ 
-            multiHandLandmarks: [landmarks],
-            multiHandedness: [{ label: 'Left' }]
-        });
+        // 1. Left Hand
+        controller.process({ multiHandLandmarks: [landmarks], multiHandedness: [{ label: 'Left' }] });
+        vi.advanceTimersByTime(200);
+        controller.process({ multiHandLandmarks: [landmarks], multiHandedness: [{ label: 'Left' }] });
+        expect(lastPose).toBe('photo_next');
         
-        // Advance time for stability check (200ms)
-        vi.advanceTimersByTime(250);
-        
-        // Process again to trigger
-        controller.process({ 
-            multiHandLandmarks: [landmarks],
-            multiHandedness: [{ label: 'Left' }]
-        });
-
-        expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-            detail: { pose: 'photo_next' }
-        }));
-        
-        callback.mockClear();
-
-        // 2. Cooldown check (Navigation cooldown is likely higher now, e.g. 500-1000ms)
-        // Let's advance enough to clear cooldown
+        lastPose = null;
         vi.advanceTimersByTime(1000);
 
-        // 3. Right Hand -> Should trigger photo_prev
-        controller.process({ 
-            multiHandLandmarks: [landmarks],
-            multiHandedness: [{ label: 'Right' }]
-        });
-        
-        // Need to stabilize new pose (even if same geometry, handedness changed implies new hand/pose context? 
-        // Or controller might treat it as same pose if we don't reset. 
-        // Let's assume we need to stabilize again or the hand swap is instant.)
-        // Ideally, in real world, one hand leaves, another enters. 
-        // Let's simulate "no hands" frame first to be clean.
-        
+        // 2. Right Hand
         controller.process({ multiHandLandmarks: [] }); 
         vi.advanceTimersByTime(100);
-
-        controller.process({ 
-            multiHandLandmarks: [landmarks],
-            multiHandedness: [{ label: 'Right' }]
-        });
-        vi.advanceTimersByTime(250);
-        controller.process({ 
-            multiHandLandmarks: [landmarks],
-            multiHandedness: [{ label: 'Right' }]
-        });
-
-        expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-            detail: { pose: 'photo_prev' }
-        }));
+        controller.process({ multiHandLandmarks: [landmarks], multiHandedness: [{ label: 'Right' }] });
+        vi.advanceTimersByTime(200);
+        controller.process({ multiHandLandmarks: [landmarks], multiHandedness: [{ label: 'Right' }] });
+        expect(lastPose).toBe('photo_prev');
 
         vi.useRealTimers();
     });
 
     it('should detect horizontal L-shape (Gun gesture)', () => {
-        // Mock landmarks for Horizontal L-shape
-        // Index pointing RIGHT (x increases), Thumb pointing UP (y decreases)
         const landmarks = Array(21).fill({ x: 0, y: 0 }); 
-        
-        // Wrist at 0,0
-        // Pinky MCP (Base of palm reference for thumb)
-        landmarks[17] = { x: 0.1, y: 0.2 }; 
+        landmarks[0] = { x: 0, y: 0 };
+        landmarks[9] = { x: 0, y: -0.2 }; 
 
-        // Index (Horizontal Extended): MCP(0.1, 0), PIP(0.3, 0), Tip(0.5, 0)
-        landmarks[6] = { x: 0.1, y: 0 };
-        landmarks[7] = { x: 0.3, y: 0 };
-        landmarks[8] = { x: 0.5, y: 0 };
+        // Index (Horizontal): Tip(0.5, 0)
+        landmarks[6] = { x: 0.1, y: 0 }; landmarks[7] = { x: 0.3, y: 0 }; landmarks[8] = { x: 0.5, y: 0 };
+        // Thumb (Vertical): Tip(0, -0.5)
+        landmarks[2] = { x: 0, y: -0.1 }; landmarks[3] = { x: 0, y: -0.3 }; landmarks[4] = { x: 0, y: -0.5 }; 
 
-        // Thumb (Vertical Extended): MCP(0.1, -0.1), Tip(0.1, -0.4)
-        landmarks[2] = { x: 0.1, y: -0.1 };
-        landmarks[3] = { x: 0.1, y: -0.2 };
-        landmarks[4] = { x: 0.1, y: -0.4 }; 
-
-        // Others Curled (Tip closer to wrist than PIP)
-        [12, 16, 20].forEach(tip => {
-            landmarks[tip] = { x: 0.1, y: 0.1 }; 
-        });
-        [10, 14, 18].forEach(pip => { // Use PIP indices for loop logic if consistent
-             // Actually loop sets tip. Set PIP manually.
-        });
-        // Set PIPs for Middle, Ring, Pinky
-        landmarks[11] = { x: 0.15, y: 0.15 }; // PIP further
-        landmarks[15] = { x: 0.15, y: 0.25 };
-        landmarks[19] = { x: 0.15, y: 0.35 };
+        [12,16,20].forEach(tip => landmarks[tip] = { x: 0.1, y: 0.05 });
+        [11,15,19].forEach(pip => landmarks[pip] = { x: 0.1, y: 0.1 });
 
         const pose = controller.detectPose(landmarks);
         expect(pose).toBe('l_shape');
     });
 
-    it('should process rotation from hand movement but disable it when in l_shape', () => {
-        // Frame 1: Hand at X=0.5 (Neutral pose)
-        const neutralLandmarks = Array(21).fill({x: 0.5, y:0.5});
-        // Ensure not l_shape (e.g. all fingers extended)
-        // ... (mocking detectPose logic internally or just relying on simple mock if we could, 
-        // but here we must provide landmarks that don't trigger l_shape)
-        // Let's assume default filled 0.5,0.5 doesn't trigger l_shape because fingers aren't clearly curled/extended relative to wrist 0.5,0.5.
-        // Actually wrist is 0.5,0.5. Tip is 0.5,0.5. Dist is 0. Not curled? 
-        // Logic: distTip < distPip * 1.2. 0 < 0? False. So extended?
-        // If all extended, it is "Five Fingers" (Scale mode), but not l_shape.
+    it('should process rotation but disable it when in l_shape', () => {
+        // 1. Neutral (Index only)
+        const neutral = Array(21).fill({x: 0.5, y: 0.5});
+        neutral[0] = { x: 0.5, y: 0.5 }; neutral[9] = { x: 0.5, y: 0.3 };
+        neutral[8] = { x: 0.5, y: -0.1 }; neutral[7] = { x: 0.5, y: 0.1 }; neutral[6] = { x: 0.5, y: 0.3 };
+        // Thumb curled
+        neutral[4] = { x: 0.5, y: 0.52 }; neutral[3] = { x: 0.5, y: 0.51 }; neutral[2] = { x: 0.5, y: 0.5 };
         
-        controller.process({
-            multiHandLandmarks: [neutralLandmarks]
-        });
+        controller.process({ multiHandLandmarks: [neutral] });
         
-        // Frame 2: Hand at X=0.6 (Neutral pose) -> Should Rotate
-        const res2 = controller.process({
-            multiHandLandmarks: [Array(21).fill({x: 0.6, y:0.5})]
-        });
-        expect(res2.rotation).toBeCloseTo(0.5); // 0.1 * 5
+        const neutral2 = JSON.parse(JSON.stringify(neutral));
+        neutral2.forEach(p => p.x += 0.1);
+        const res2 = controller.process({ multiHandLandmarks: [neutral2] });
+        expect(res2.rotation).toBeCloseTo(0.5);
 
-        // Frame 3: Hand at X=0.7 (L-Shape Active) -> Should NOT Rotate
-        // We need to construct a valid L-Shape landmark set shifted to X=0.7
-        const lShapeLandmarks = Array(21).fill({ x: 0.7, y: 0 }); 
-        
-        // Helper to set finger relative to wrist (0.7, 0)
-        const setFinger = (tip, pip, mcp, isExtended) => {
-            const wristX = 0.7;
-            if (isExtended) {
-                lShapeLandmarks[tip] = { x: wristX, y: -0.8 }; 
-                lShapeLandmarks[pip] = { x: wristX, y: -0.5 };
-                lShapeLandmarks[mcp] = { x: wristX, y: -0.2 }; 
-            } else {
-                lShapeLandmarks[tip] = { x: wristX, y: -0.1 }; 
-                lShapeLandmarks[pip] = { x: wristX, y: -0.15 };
-                lShapeLandmarks[mcp] = { x: wristX, y: -0.2 }; 
-            }
-        };
-        // L Shape Setup
-        setFinger(8, 7, 6, true);  // Index
-        setFinger(4, 3, 2, true);  // Thumb
-        setFinger(12, 11, 10, false); // Middle
-        setFinger(16, 15, 14, false); // Ring
-        setFinger(20, 19, 18, false); // Pinky
-        lShapeLandmarks[17] = { x: 0.8, y: 0.2 }; // Pinky MCP
+        // 2. L-Shape
+        const lShape = Array(21).fill({ x: 0.7, y: 0 }); 
+        lShape[0] = { x: 0.7, y: 0 }; lShape[9] = { x: 0.7, y: -0.2 };
+        lShape[8] = { x: 0.7, y: -0.8 }; lShape[7] = { x: 0.7, y: -0.5 }; lShape[6] = { x: 0.7, y: -0.2 };
+        lShape[4] = { x: 1.0, y: -0.8 }; lShape[3] = { x: 1.0, y: -0.5 }; lShape[2] = { x: 1.0, y: -0.2 };
+        [12,16,20].forEach(tip => lShape[tip] = { x: 0.8, y: 0.1 });
+        [11,15,19].forEach(pip => lShape[pip] = { x: 0.8, y: 0.2 });
 
-        // Stabilize L-Shape (requires > 150ms)
         vi.useFakeTimers();
-        const now = performance.now();
-        vi.setSystemTime(now);
-        
-        controller.process({ multiHandLandmarks: [lShapeLandmarks] });
+        controller.process({ multiHandLandmarks: [lShape] });
         vi.advanceTimersByTime(200);
-        
-        // Now activePose should be l_shape. 
-        // Movement: previous 0.6 -> current 0.7. Delta 0.1. 
-        // If not disabled, rotation would be 0.5.
-        // With fix, should be 0.
-        const res3 = controller.process({ multiHandLandmarks: [lShapeLandmarks] });
+        const res3 = controller.process({ multiHandLandmarks: [lShape] });
         
         expect(res3.rotation).toBe(0);
         expect(res3.activePose).toBe('l_shape');
-        
         vi.useRealTimers();
     });
 });

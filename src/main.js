@@ -100,6 +100,8 @@ async function initHandTracking() {
                 connectorColor: '#00BFFF', // DeepSkyBlue
                 landmarkColor: '#FFFFFF'   // White
             };
+            // Forcibly restore and lock tree scale to 1.3 in navigation mode
+            christmasTree.targetScale = 1.3;
         } else if (activePose) {
             results.drawOptions = {
                 connectorColor: '#FFD700', // Gold

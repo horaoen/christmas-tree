@@ -167,6 +167,9 @@ describe('OrnamentManager', () => {
     it('should navigate to photo with shortest rotation path', () => {
         // Mock Tree
         const tree = new ChristmasTree(mockScene, mockCamera);
+        // Mock attach for the internal treeObject and scene to avoid matrix errors in test
+        tree.treeObject.attach = vi.fn();
+        mockScene.attach = vi.fn();
         
         // Setup mock ornaments
         const orn1 = { position: new THREE.Vector3(1, 0, 0), userData: {} }; // Angle 0 -> Target PI/2
@@ -180,8 +183,10 @@ describe('OrnamentManager', () => {
         tree.treeObject.rotation.y = 0;
         tree.targetScale = 1.3; // Reset scale
         tree.navigateToPhoto(0);
+        
         expect(tree.targetRotationY).toBeCloseTo(Math.PI / 2);
-        expect(tree.targetScale).toBe(2.5); // Verify Auto Zoom
+        expect(tree.targetScale).toBe(1.3); // Verify Tree stays at original size
+        expect(tree.ornamentManager.selectedOrnament).toBe(orn1); // Verify photo is selected (brought to front)
 
         // 2. From PI/2 navigate to Orn2 (Target 0)
         // Shortest path: PI/2 -> 0 is -PI/2.
