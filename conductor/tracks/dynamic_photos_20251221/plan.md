@@ -26,3 +26,7 @@
 - [x] Task: 修复极端分布下的穿模或光照过曝问题 [52984bd]
 - [x] Task: 执行最终性能测试和交互验证（确保手势控制依然流畅） [9da4590]
 - [x] Task: Conductor - User Manual Verification 'Phase 4: 视觉打磨与最终验收' (Protocol in workflow.md)
+
+## Phase 5: 优化显示效果 (Post-Release Fixes)
+- [x] Task: 添加正面补光灯 (Frontal Light) 以改善照片显示亮度，同时防止过曝 [62d98e1]
+- [~] Task: 微调相框材质的 Emissive 参数，配合新光照平衡整体亮度
