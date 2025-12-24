@@ -14,7 +14,11 @@
     - [x] 子任务: 更新 `GestureController.process` 以解析 `multiHandedness` 数据。
     - [x] 子任务: 实现逻辑：左手 L 形触发 `photo_next`，右手 L 形触发 `photo_prev`。
     - [x] 子任务: 移除旧的垂直位移代码，并调整冷却时间以适应离散触发。
-    - [x] 子任务: 更新相关单元测试。
+    - [x] 子任务: 更新相关单元测试.
+- [x] Task: 修复：优化 L 形手势检测与调试 (User Feedback) (c109048)
+    - [x] 子任务: 引入向量角度计算，提高拇指和食指在不同方向下的识别鲁棒性。
+    - [x] 子任务: 在 `GestureController` 中添加详细的调试日志（输出手指弯曲状态、手性）。
+    - [x] 子任务: 更新单元测试以覆盖水平指向的 L 形手势。
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: 手势识别引擎升级' (Protocol in workflow.md)
 
 ## Phase 2: 相框导航与自动对齐逻辑 (Ornament Navigation & Alignment)
