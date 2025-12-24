@@ -29,4 +29,5 @@
 
 ## Phase 5: 优化显示效果 (Post-Release Fixes)
 - [x] Task: 添加正面补光灯 (Frontal Light) 以改善照片显示亮度，同时防止过曝 [62d98e1]
-- [~] Task: 微调相框材质的 Emissive 参数，配合新光照平衡整体亮度
+- [x] Task: 微调相框材质的 Emissive 参数，配合新光照平衡整体亮度 [8eddbf1]
+- [ ] Task: Conductor - User Manual Verification 'Phase 5: 优化显示效果' (Protocol in workflow.md)
