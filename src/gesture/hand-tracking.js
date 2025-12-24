@@ -72,12 +72,22 @@ function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, video.videoWidth, video.videoHeight);
     
+    // Default colors
+    let connectorColor = '#00FF00';
+    let landmarkColor = '#FF0000';
+
+    // Check for custom colors passed via results object (attached by controller)
+    if (results.drawOptions) {
+        if (results.drawOptions.connectorColor) connectorColor = results.drawOptions.connectorColor;
+        if (results.drawOptions.landmarkColor) landmarkColor = results.drawOptions.landmarkColor;
+    }
+
     if (results.multiHandLandmarks) {
         for (const landmarks of results.multiHandLandmarks) {
             window.drawConnectors(canvasCtx, landmarks, window.HAND_CONNECTIONS,
-                           {color: '#00FF00', lineWidth: 5});
+                           {color: connectorColor, lineWidth: 5});
             window.drawLandmarks(canvasCtx, landmarks,
-                          {color: '#FF0000', lineWidth: 2});
+                          {color: landmarkColor, lineWidth: 2});
         }
     }
     canvasCtx.restore();

@@ -341,8 +341,7 @@ export class OrnamentManager {
             let targetQuat;
 
             if (isSelected) {
-                // 选中状态：移动到摄像机前方
-                // ... (unchanged logic for selection)
+                // ... (unchanged)
                 const cameraDirection = new THREE.Vector3();
                 this.camera.getWorldDirection(cameraDirection);
                 targetPos = this.camera.position.clone().add(cameraDirection.multiplyScalar(1.5));
@@ -352,9 +351,6 @@ export class OrnamentManager {
 
             } else {
                 // 非选中状态：Counter-Scaling
-                // When tree scales up, shrink the ornament locally so it doesn't block view
-                // We divide by treeScale to maintain roughly constant visual size
-                // or at least prevent linear growth.
                 const counterScale = 1.0 / Math.max(1.0, treeScale * 0.8);
                 targetScale.multiplyScalar(counterScale);
 
@@ -363,6 +359,19 @@ export class OrnamentManager {
 
                 if (isHovered) {
                     targetScale.multiplyScalar(1.5);
+                    
+                    // Visual Feedback: Subtle Pulse Glow for navigation
+                    const frameMesh = ornament.children[0];
+                    if (frameMesh.material.emissive) {
+                        const pulse = Math.sin(performance.now() * 0.005) * 0.5 + 0.5;
+                        frameMesh.material.emissive.setHex(0xD4AF37).multiplyScalar(0.2 + pulse * 0.3);
+                    }
+                } else {
+                    // Reset emissive
+                    const frameMesh = ornament.children[0];
+                    if (frameMesh.material.emissive) {
+                        frameMesh.material.emissive.setHex(0x000000);
+                    }
                 }
             }
 

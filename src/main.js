@@ -92,7 +92,21 @@ let lastVideoTime = -1;
 
 async function initHandTracking() {
     await createHandLandmarker(videoElement, landmarksCanvas, (results) => {
-        const { rotation, scale } = gestureController.process(results);
+        const { rotation, scale, activePose } = gestureController.process(results);
+        
+        // Visual Feedback for Gestures
+        if (activePose === 'l_shape') {
+            results.drawOptions = {
+                connectorColor: '#00BFFF', // DeepSkyBlue
+                landmarkColor: '#FFFFFF'   // White
+            };
+        } else if (activePose) {
+            results.drawOptions = {
+                connectorColor: '#FFD700', // Gold
+                landmarkColor: '#FF4500'   // OrangeRed
+            };
+        }
+
         if (rotation !== 0) {
             christmasTree.updateTargetRotation(rotation);
         }

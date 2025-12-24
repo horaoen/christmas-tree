@@ -172,7 +172,7 @@ export class GestureController {
             scaleFactor = null;
         }
 
-        return { rotation: rotationDelta, scale: scaleFactor };
+        return { rotation: rotationDelta, scale: scaleFactor, activePose: activePose };
     }
 
     // Helper to determine if a finger is curled
