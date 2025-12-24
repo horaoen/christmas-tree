@@ -127,9 +127,9 @@ export function setupScene(canvas) {
 
     const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        2.2,  // strength (was 1.5) - Much stronger glow
-        0.8,  // radius (was 0.4) - Wider, dreamier spread
-        0.15  // threshold (was 0.2) - Allow more particles to glow
+        1.2,  // strength (was 2.2) - Reduced to prevent whiteout
+        0.8,  // radius 
+        0.5   // threshold (was 0.15) - Only very bright things (stars) should glow
     );
 
     const composer = new EffectComposer(renderer);

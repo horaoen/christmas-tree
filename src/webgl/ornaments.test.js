@@ -110,6 +110,15 @@ describe('OrnamentManager', () => {
         expect(frameMesh.geometry.parameters.height).toBeCloseTo(0.26);
     });
 
+    it('should have correct default emissive intensity', () => {
+        const config = [{ id: 'test', path: 'test.png' }];
+        manager.loadOrnaments(config);
+        const photoMesh = manager.ornaments[0].children[2];
+        
+        expect(photoMesh.material.emissiveIntensity).toBe(0.0);
+        expect(photoMesh.material.emissive.getHex()).toBe(0x000000);
+    });
+
     it('should calculate correct surface coordinates', () => {
         // Mock tree parameters: height=3, baseRadius=1.2
         const tree = new ChristmasTree(mockScene, mockCamera, 25000, 3, 1.2);
